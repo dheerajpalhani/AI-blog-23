@@ -7,28 +7,16 @@ import toast from 'react-hot-toast';
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const { login } = useAuthStore();
+  const { login, loading } = useAuthStore();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data) => {
-    setLoading(true);
-    try {
-      const response = await api.post('/auth/login', data);
-      const { user, token } = response.data;
-      login(user, token);
+    const result = await login(data.email, data.password);
+    if (result.success) {
       toast.success('Successfully logged in!');
       navigate('/');
-    } catch (error) {
-      console.error('Login error, using mockup mock-login for development:', error);
-      // For developer testing / standalone client view, mock login if backend is not yet fully configured/running
-      const mockUser = { id: 'mock-id', name: 'John Doe', email: data.email };
-      const mockToken = 'mock-jwt-token';
-      login(mockUser, mockToken);
-      toast.success('Logged in as Guest!');
-      navigate('/');
-    } finally {
-      setLoading(false);
+    } else {
+      toast.error(result.message || 'Login failed');
     }
   };
 

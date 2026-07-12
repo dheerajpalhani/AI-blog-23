@@ -7,30 +7,18 @@ import toast from 'react-hot-toast';
 
 const Register = () => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm();
-  const { login } = useAuthStore();
+  const { register: registerUser, loading } = useAuthStore();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
   const password = watch('password');
 
   const onSubmit = async (data) => {
-    setLoading(true);
-    try {
-      const response = await api.post('/auth/register', data);
-      const { user, token } = response.data;
-      login(user, token);
+    const result = await registerUser(data.name, data.email, data.password);
+    if (result.success) {
       toast.success('Successfully registered account!');
       navigate('/');
-    } catch (error) {
-      console.error('Registration error, using fallback mockup logic:', error);
-      // Fallback guest session for dev testing
-      const mockUser = { id: 'mock-id', name: data.name, email: data.email };
-      const mockToken = 'mock-jwt-token';
-      login(mockUser, mockToken);
-      toast.success('Account created as guest session!');
-      navigate('/');
-    } finally {
-      setLoading(false);
+    } else {
+      toast.error(result.message || 'Registration failed');
     }
   };
 

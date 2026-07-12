@@ -4,6 +4,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const postRoutes = require('./routes/postRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -29,6 +30,9 @@ app.use(cookieParser());
 
 // Auth Routes
 app.use('/api/auth', authRoutes);
+
+// Post Routes
+app.use('/api/posts', postRoutes);
 
 // Health Check Route
 app.get('/api/health', (req, res) => {

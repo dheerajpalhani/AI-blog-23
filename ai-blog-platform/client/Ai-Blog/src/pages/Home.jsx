@@ -9,7 +9,7 @@ const Home = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await api.get('/posts');
+        const response = await api.get('/posts?status=published');
         setPosts(response.data?.posts || []);
       } catch (error) {
         console.error('Failed to fetch posts, using mock data as fallback:', error);
@@ -19,7 +19,7 @@ const Home = () => {
             _id: '1',
             title: 'The Future of AI in Web Development',
             description: 'Discover how modern AI tools are shifting the paradigms of full-stack engineering and user experience design.',
-            tag: 'Technology',
+            category: 'Technology',
             author: { name: 'Sarah Jenkins' },
             createdAt: new Date().toISOString(),
             readTime: '5 min read'
@@ -28,7 +28,7 @@ const Home = () => {
             _id: '2',
             title: 'Crafting Premium Glassmorphic Designs',
             description: 'A step-by-step guide to building highly interactive glassmorphism UI interfaces using vanilla CSS styling.',
-            tag: 'Design',
+            category: 'Design',
             author: { name: 'Alex Rivera' },
             createdAt: new Date().toISOString(),
             readTime: '8 min read'
@@ -37,7 +37,7 @@ const Home = () => {
             _id: '3',
             title: 'Unlocking Gemini AI Capabilities in Express',
             description: 'Learn how to integrate the Gemini AI SDK into Node.js backend controllers to generate high-quality text dynamically.',
-            tag: 'AI Integration',
+            category: 'AI Integration',
             author: { name: 'David Chen' },
             createdAt: new Date().toISOString(),
             readTime: '12 min read'
@@ -73,7 +73,7 @@ const Home = () => {
                 }} 
               />
               <div className="blog-card-content">
-                <span className="blog-card-tag">{post.tag || 'Blogging'}</span>
+                <span className="blog-card-tag">{post.category || 'Blogging'}</span>
                 <h2 className="blog-card-title">{post.title}</h2>
                 <p className="blog-card-desc">{post.description}</p>
                 <div className="blog-card-meta">

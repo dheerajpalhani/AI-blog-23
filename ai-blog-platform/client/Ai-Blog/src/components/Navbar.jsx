@@ -29,10 +29,10 @@ const Navbar = () => {
           {isAuthenticated ? (
             <>
               <NavLink 
-                to="/create" 
+                to="/dashboard" 
                 className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
               >
-                Create Blog
+                Dashboard
               </NavLink>
               <span className="nav-link" style={{ color: 'var(--text-muted)' }}>
                 Hi, {user?.name || 'User'}

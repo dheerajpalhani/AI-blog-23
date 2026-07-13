@@ -43,6 +43,57 @@ const Dashboard = () => {
   const [editPostId, setEditPostId] = useState(null);
   const [aiGenerating, setAiGenerating] = useState(false);
 
+  // Editor metrics and autosave states
+  const [wordCount, setWordCount] = useState(0);
+  const [liveReadTime, setLiveReadTime] = useState('1 min read');
+  const [autosaveStatus, setAutosaveStatus] = useState('');
+
+  // Calculate live word count & reading time
+  useEffect(() => {
+    const cleanText = newContent.replace(/<[^>]*>/g, '').trim();
+    const words = cleanText ? cleanText.split(/\s+/).filter((w) => w.length > 0).length : 0;
+    setWordCount(words);
+    const min = Math.max(1, Math.round(words / 200));
+    setLiveReadTime(`${min} min read`);
+  }, [newContent]);
+
+  // Debounced autosave effect
+  useEffect(() => {
+    if (activeTab !== 'create-blog' || !newTitle.trim()) {
+      return;
+    }
+
+    setAutosaveStatus('Draft modified, saving soon...');
+
+    const delayDebounceFn = setTimeout(async () => {
+      setAutosaveStatus('Autosaving draft...');
+      try {
+        const payload = {
+          title: newTitle,
+          description: newSummary || `Draft of ${newTitle}`,
+          content: newContent,
+          category: newTag,
+          status: 'draft',
+        };
+
+        if (editPostId) {
+          await api.put(`/posts/${editPostId}`, payload);
+        } else {
+          const response = await api.post('/posts', payload);
+          setEditPostId(response.data?.post?._id || response.data?.post?.id);
+        }
+
+        const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setAutosaveStatus(`Saved draft at ${now}`);
+      } catch (error) {
+        console.error('Autosave error:', error);
+        setAutosaveStatus('Autosave failed');
+      }
+    }, 5000); // 5 seconds of inactivity triggers autosave
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [newTitle, newContent, newSummary, newTag, activeTab]);
+
   const fetchUserPosts = async () => {
     setLoadingPosts(true);
     try {
@@ -428,6 +479,15 @@ const Dashboard = () => {
                   <label className="block text-sm font-semibold mb-2 text-slate-350 text-left">Body Content</label>
                   <div className="bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
                     <ReactQuill theme="snow" value={newContent} onChange={setNewContent} />
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-slate-400 mt-2 px-1">
+                    <div className="flex gap-4">
+                      <span>Words: <strong className="text-violet-400">{wordCount}</strong></span>
+                      <span>Read Time: <strong className="text-cyan-400">{liveReadTime}</strong></span>
+                    </div>
+                    {autosaveStatus && (
+                      <span className="text-slate-500 italic">{autosaveStatus}</span>
+                    )}
                   </div>
                 </div>
 

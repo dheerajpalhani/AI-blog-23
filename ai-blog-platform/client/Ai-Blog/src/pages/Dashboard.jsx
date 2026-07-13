@@ -153,23 +153,99 @@ const Dashboard = () => {
     }
   };
 
-  const handleAiAutoWrite = async () => {
-    if (!newTitle) {
-      toast.error('Please enter a Title first so the AI knows what to write!');
-      return;
+  // AI assistant states
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiResult, setAiResult] = useState('');
+  const [aiStreaming, setAiStreaming] = useState(false);
+  const [aiAction, setAiAction] = useState('generate');
+
+  const aiOptions = [
+    { id: 'generate', name: 'Generate Blog', icon: Sparkles, requiresPrompt: true },
+    { id: 'continue', name: 'Continue Writing', icon: TrendingUp, requiresPrompt: false },
+    { id: 'rewrite', name: 'Rewrite Content', icon: Sparkles, requiresPrompt: false },
+    { id: 'grammar', name: 'Improve Grammar', icon: Sparkles, requiresPrompt: false },
+    { id: 'summarize', name: 'Summarize Blog', icon: FileText, requiresPrompt: false },
+    { id: 'meta', name: 'SEO Meta Description', icon: FileText, requiresPrompt: false },
+    { id: 'titles', name: 'Generate Blog Titles', icon: PlusSquare, requiresPrompt: true },
+    { id: 'tags', name: 'Generate Hashtags', icon: Bookmark, requiresPrompt: false },
+  ];
+
+  const handleAiProcess = async (actionType) => {
+    let targetPrompt = '';
+    if (actionType === 'generate' || actionType === 'titles') {
+      if (!aiPrompt.trim() && !newTitle.trim()) {
+        toast.error('Please enter an AI prompt or blog title first!');
+        return;
+      }
+      targetPrompt = aiPrompt.trim() || newTitle.trim();
     }
-    setAiGenerating(true);
-    const toastId = toast.loading('Gemini is forging your content...');
+
+    setAiStreaming(true);
+    setAiResult('');
+    const toastId = toast.loading('Connecting to Gemini...');
+
     try {
-      const response = await api.post('/posts/generate', { prompt: newTitle });
-      setNewContent(response.data?.generatedContent || '');
-      setNewSummary(response.data?.summary || `An exploration of ${newTitle}.`);
-      toast.success('AI Content generated successfully!', { id: toastId });
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/ai/process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: actionType,
+          prompt: targetPrompt,
+          content: newContent,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'AI processing request failed');
+      }
+
+      toast.dismiss(toastId);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let finished = false;
+      let accumulatedText = '';
+
+      while (!finished) {
+        const { value, done } = await reader.read();
+        if (done) {
+          finished = true;
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim();
+            if (dataStr === '[DONE]') {
+              finished = true;
+              break;
+            }
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.error) {
+                throw new Error(parsed.error);
+              }
+              if (parsed.text) {
+                accumulatedText += parsed.text;
+                setAiResult(accumulatedText);
+              }
+            } catch (e) {
+              // Partial chunk parsed
+            }
+          }
+        }
+      }
+      toast.success('AI processing complete!');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to generate AI content.', { id: toastId });
+      toast.error(error.message || 'Failed to communicate with AI model', { id: toastId });
     } finally {
-      setAiGenerating(false);
+      setAiStreaming(false);
     }
   };
 
@@ -424,22 +500,23 @@ const Dashboard = () => {
 
           {/* 3. Create Blog Tab (Embedded Form) */}
           {activeTab === 'create-blog' && (
-            <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl max-w-3xl mx-auto">
-              <form className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-slate-350 text-left">Post Title</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600 transition" 
-                    placeholder="Enter blog post title"
-                    value={newTitle} 
-                    onChange={(e) => setNewTitle(e.target.value)} 
-                    required 
-                  />
-                </div>
+            <div className="flex flex-col lg:flex-row gap-8 max-w-6xl mx-auto items-start">
+              {/* Form Editor (Left Side - 70%) */}
+              <div className="flex-1 w-full p-6 bg-slate-900 border border-slate-800 rounded-xl">
+                <form className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-slate-350 text-left">Post Title</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600 transition" 
+                      placeholder="Enter blog post title"
+                      value={newTitle} 
+                      onChange={(e) => setNewTitle(e.target.value)} 
+                      required 
+                    />
+                  </div>
 
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                  <div className="flex-1">
+                  <div>
                     <label className="block text-sm font-semibold mb-2 text-slate-350 text-left">Category / Tag</label>
                     <select 
                       className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-violet-600 transition"
@@ -452,77 +529,186 @@ const Dashboard = () => {
                       <option>Development</option>
                     </select>
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-slate-350 text-left">Short Summary</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600 transition" 
+                      placeholder="Brief overview summarizing the article"
+                      value={newSummary} 
+                      onChange={(e) => setNewSummary(e.target.value)} 
+                      required 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-slate-350 text-left">Body Content</label>
+                    <div className="bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
+                      <ReactQuill theme="snow" value={newContent} onChange={setNewContent} />
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-slate-400 mt-2 px-1">
+                      <div className="flex gap-4">
+                        <span>Words: <strong className="text-violet-400">{wordCount}</strong></span>
+                        <span>Read Time: <strong className="text-cyan-400">{liveReadTime}</strong></span>
+                      </div>
+                      {autosaveStatus && (
+                        <span className="text-slate-500 italic">{autosaveStatus}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setNewTitle('');
+                        setNewSummary('');
+                        setNewContent('');
+                        setEditPostId(null);
+                        setActiveTab('overview');
+                      }}
+                      className="px-4 py-2 border border-slate-850 hover:bg-slate-800 rounded-lg text-sm font-semibold cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={(e) => handlePublish(e, 'draft')}
+                      disabled={loading}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-sm font-semibold transition cursor-pointer"
+                    >
+                      Save as Draft
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={(e) => handlePublish(e, 'published')}
+                      disabled={loading}
+                      className="px-5 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-semibold text-white shadow-md hover:shadow-violet-600/10 transition cursor-pointer"
+                    >
+                      {editPostId ? 'Update & Publish' : 'Publish Blog'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* AI Assistant Panel (Right Side - 30%) */}
+              <div className="w-full lg:w-80 shrink-0 p-6 bg-slate-900 border border-slate-800 rounded-xl space-y-6 lg:sticky lg:top-6">
+                <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+                  <Sparkles className="text-violet-400" size={18} />
+                  <h3 className="font-bold text-white text-sm">AI Assistant</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="block text-xs font-semibold text-slate-400 text-left">Select Task</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {aiOptions.map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setAiAction(opt.id)}
+                        className={`flex items-center gap-1.5 p-2.5 rounded-lg text-left text-[11px] font-semibold border transition cursor-pointer ${
+                          aiAction === opt.id 
+                            ? 'bg-violet-950/40 border-violet-600 text-violet-400' 
+                            : 'bg-slate-950 border-slate-850 text-slate-400 hover:border-slate-800'
+                        }`}
+                      >
+                        {React.createElement(opt.icon, { size: 12 })}
+                        <span className="truncate">{opt.name}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {aiOptions.find((o) => o.id === aiAction)?.requiresPrompt && (
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-slate-400 text-left">AI Prompt / Topic</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Web3 trends, CSS layouts"
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-850 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-600 transition"
+                      />
+                    </div>
+                  )}
+
                   <button
                     type="button"
-                    onClick={handleAiAutoWrite}
-                    disabled={aiGenerating}
-                    className="h-[46px] inline-flex items-center justify-center gap-2 px-4 rounded-lg bg-cyan-950/30 border border-cyan-800/80 text-cyan-400 font-semibold hover:bg-cyan-950/60 transition cursor-pointer"
+                    onClick={() => handleAiProcess(aiAction)}
+                    disabled={aiStreaming}
+                    className="w-full h-10 inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-950/40 border border-cyan-800/80 text-cyan-400 font-bold text-xs hover:bg-cyan-950/60 transition cursor-pointer disabled:opacity-50"
                   >
-                    <Sparkles size={16} />
-                    {aiGenerating ? 'Generating...' : 'Auto-Generate with Gemini'}
+                    <Sparkles size={14} />
+                    {aiStreaming ? 'Streaming response...' : 'Run AI Assistant'}
                   </button>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-slate-350 text-left">Short Summary</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600 transition" 
-                    placeholder="Brief overview summarizing the article"
-                    value={newSummary} 
-                    onChange={(e) => setNewSummary(e.target.value)} 
-                    required 
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-slate-350 text-left">Body Content</label>
-                  <div className="bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
-                    <ReactQuill theme="snow" value={newContent} onChange={setNewContent} />
-                  </div>
-                  <div className="flex justify-between items-center text-xs text-slate-400 mt-2 px-1">
-                    <div className="flex gap-4">
-                      <span>Words: <strong className="text-violet-400">{wordCount}</strong></span>
-                      <span>Read Time: <strong className="text-cyan-400">{liveReadTime}</strong></span>
+                  <div className="space-y-2 pt-2 border-t border-slate-800">
+                    <label className="block text-xs font-semibold text-slate-400 text-left">Response Preview</label>
+                    <div className="w-full min-h-[140px] max-h-[220px] overflow-y-auto bg-slate-950 border border-slate-850 rounded-lg p-3 text-xs text-slate-350 select-text leading-relaxed whitespace-pre-wrap text-left">
+                      {aiResult ? (
+                        <div dangerouslySetInnerHTML={{ __html: aiResult }} />
+                      ) : (
+                        <span className="text-slate-650 italic">Generated output will stream here...</span>
+                      )}
                     </div>
-                    {autosaveStatus && (
-                      <span className="text-slate-500 italic">{autosaveStatus}</span>
-                    )}
                   </div>
-                </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                  <button 
-                    type="button" 
-                    onClick={() => {
-                      setNewTitle('');
-                      setNewSummary('');
-                      setNewContent('');
-                      setEditPostId(null);
-                      setActiveTab('overview');
-                    }}
-                    className="px-4 py-2 border border-slate-850 hover:bg-slate-800 rounded-lg text-sm font-semibold cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={(e) => handlePublish(e, 'draft')}
-                    disabled={loading}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-sm font-semibold transition cursor-pointer"
-                  >
-                    Save as Draft
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={(e) => handlePublish(e, 'published')}
-                    disabled={loading}
-                    className="px-5 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-semibold text-white shadow-md hover:shadow-violet-600/10 transition cursor-pointer"
-                  >
-                    {editPostId ? 'Update & Publish' : 'Publish Blog'}
-                  </button>
+                  {aiResult && (
+                    <div className="space-y-2 pt-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewContent((prev) => prev + aiResult);
+                            toast.success('Appended to editor!');
+                          }}
+                          className="p-2 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                        >
+                          Append to Content
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewContent(aiResult);
+                            toast.success('Replaced editor content!');
+                          }}
+                          className="p-2 bg-violet-950/40 hover:bg-violet-950/70 text-violet-400 border border-violet-850 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                        >
+                          Replace Content
+                        </button>
+                      </div>
+
+                      {(aiAction === 'meta' || aiAction === 'summarize') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cleanText = aiResult.replace(/<[^>]*>/g, '').trim();
+                            setNewSummary(cleanText);
+                            toast.success('Set as summary!');
+                          }}
+                          className="w-full p-2 bg-cyan-950/30 hover:bg-cyan-950/60 text-cyan-400 border border-cyan-850 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                        >
+                          Use as Summary Description
+                        </button>
+                      )}
+
+                      {aiAction === 'titles' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cleanText = aiResult.replace(/<[^>]*>/g, '').replace(/^[•\-\*\d\.\s]+/g, '').trim().split('\n')[0];
+                            setNewTitle(cleanText);
+                            toast.success('Set as post title!');
+                          }}
+                          className="w-full p-2 bg-cyan-950/30 hover:bg-cyan-950/60 text-cyan-400 border border-cyan-850 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                        >
+                          Use First Title
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </form>
+              </div>
             </div>
           )}
 

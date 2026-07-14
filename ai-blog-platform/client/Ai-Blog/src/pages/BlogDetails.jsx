@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import SkeletonCard from '../components/SkeletonCard';
 import { 
   Eye, 
   ThumbsUp, 
@@ -255,18 +257,23 @@ const BlogDetails = () => {
   };
 
   if (loading) {
-    return <div style={{ textAlign: 'center', padding: '100px' }}>Loading article details...</div>;
+    return <SkeletonCard variant="details" />;
   }
 
   if (!post) {
-    return <div style={{ textAlign: 'center', padding: '100px' }}>Article not found.</div>;
+    return <div style={{ textAlign: 'center', padding: '100px', color: 'var(--text-muted)' }}>Article not found.</div>;
   }
 
   const shareText = encodeURIComponent(post.title);
   const shareUrl = encodeURIComponent(window.location.href);
 
   return (
-    <div className="details-container">
+    <motion.div 
+      className="details-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <Link to="/" className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white mb-6">
         <ChevronLeft size={14} /> Back to feed
       </Link>
@@ -418,7 +425,7 @@ const BlogDetails = () => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

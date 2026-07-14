@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import api from '../services/api';
 import { Search, ChevronLeft, ChevronRight, Eye, ThumbsUp } from 'lucide-react';
+import SkeletonCard from '../components/SkeletonCard';
 
 const Home = () => {
   const [posts, setPosts] = useState([]);
@@ -63,15 +65,25 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      <section className="home-hero">
+      <motion.section 
+        className="home-hero"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
         <h1 className="hero-title">Forge Your Ideas with AI</h1>
         <p className="hero-subtitle">
           Discover a next-generation writing space where Gemini AI assists you in generating, refining, and publishing beautiful content.
         </p>
-      </section>
+      </motion.section>
 
       {/* Filter and Search Bar Row */}
-      <div className="feed-controls">
+      <motion.div 
+        className="feed-controls"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.6 }}
+      >
         <div className="search-sort-bar">
           <form onSubmit={handleSearchSubmit} className="search-form">
             <input
@@ -115,43 +127,69 @@ const Home = () => {
             </button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>Loading articles...</div>
+        <div className="blogs-grid">
+          {[...Array(6)].map((_, idx) => (
+            <SkeletonCard key={idx} variant="card" />
+          ))}
+        </div>
       ) : posts.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
           No published articles found matching your criteria.
         </div>
       ) : (
         <>
-          <div className="blogs-grid">
+          <motion.div 
+            className="blogs-grid"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.08
+                }
+              }
+            }}
+          >
             {posts.map((post) => (
-              <Link to={`/blog/${post._id}`} key={post._id} className="blog-card flex flex-col">
-                <div 
-                  className="blog-card-img" 
-                  style={{ 
-                    backgroundImage: post.coverImage 
-                      ? `url(${post.coverImage})` 
-                      : `linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(6, 182, 212, 0.4))` 
-                  }} 
-                />
-                <div className="blog-card-content">
-                  <span className="blog-card-tag">{post.category || 'Blogging'}</span>
-                  <h2 className="blog-card-title line-clamp-2">{post.title}</h2>
-                  <p className="blog-card-desc line-clamp-3">{post.description || 'No description available.'}</p>
-                  <div className="blog-card-meta">
-                    <span className="truncate">By {post.author?.name || 'Anonymous'}</span>
-                    <div className="flex gap-3 items-center shrink-0">
-                      <span className="flex items-center gap-0.5"><Eye size={12} /> {post.views || 0}</span>
-                      <span className="flex items-center gap-0.5"><ThumbsUp size={12} /> {post.likes?.length || 0}</span>
-                      <span className="shrink-0">{post.readTime || '3 min read'}</span>
+              <motion.div
+                key={post._id}
+                variants={{
+                  hidden: { opacity: 0, y: 15 },
+                  visible: { opacity: 1, y: 0 }
+                }}
+                transition={{ duration: 0.4 }}
+              >
+                <Link to={`/blog/${post._id}`} className="blog-card flex flex-col h-full">
+                  <div 
+                    className="blog-card-img" 
+                    style={{ 
+                      backgroundImage: post.coverImage 
+                        ? `url(${post.coverImage})` 
+                        : `linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(6, 182, 212, 0.4))` 
+                    }} 
+                  />
+                  <div className="blog-card-content">
+                    <span className="blog-card-tag">{post.category || 'Blogging'}</span>
+                    <h2 className="blog-card-title line-clamp-2">{post.title}</h2>
+                    <p className="blog-card-desc line-clamp-3">{post.description || 'No description available.'}</p>
+                    <div className="blog-card-meta">
+                      <span className="truncate">By {post.author?.name || 'Anonymous'}</span>
+                      <div className="flex gap-3 items-center shrink-0">
+                        <span className="flex items-center gap-0.5"><Eye size={12} /> {post.views || 0}</span>
+                        <span className="flex items-center gap-0.5"><ThumbsUp size={12} /> {post.likes?.length || 0}</span>
+                        <span className="shrink-0">{post.readTime || '3 min read'}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Pagination Controls */}
           {pages > 1 && (

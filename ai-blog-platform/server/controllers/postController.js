@@ -1,4 +1,20 @@
 const Post = require('../models/Post');
+const Comment = require('../models/Comment');
+const cloudinary = require('../config/cloudinary');
+
+// Helper to upload image buffers to Cloudinary using streams
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'blogforge_covers' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+};
 
 // Helper to calculate reading time (~200 words per minute)
 const calculateReadTime = (content) => {
@@ -40,11 +56,11 @@ const createPost = async (req, res, next) => {
   }
 };
 
-// @desc    Get all blog posts (supports filtering by author, and status)
+// @desc    Get all blog posts (supports filtering by author, search, category, sorting, pagination)
 // @route   GET /api/posts
 // @access  Public / Private
 const getPosts = async (req, res, next) => {
-  const { author, status } = req.query;
+  const { author, status, search, category, sortBy, page, limit } = req.query;
 
   try {
     const filter = {};
@@ -52,7 +68,6 @@ const getPosts = async (req, res, next) => {
     // Filter by specific author
     if (author) {
       if (author === 'me') {
-        // Enforce protect was run
         if (!req.user) {
           res.status(401);
           throw new Error('Not authorized to view personal feed without session');
@@ -67,17 +82,75 @@ const getPosts = async (req, res, next) => {
     if (status) {
       filter.status = status;
     } else {
-      // By default, if no specific query is requested, only return published posts to the public
       if (!author || author !== 'me') {
         filter.status = 'published';
       }
     }
 
-    const posts = await Post.find(filter)
-      .populate('author', 'name email')
-      .sort({ createdAt: -1 });
+    // Search query matches title, description, or content
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+      ];
+    }
 
-    res.status(200).json({ success: true, count: posts.length, posts });
+    // Category filter
+    if (category && category !== 'All') {
+      filter.category = category;
+    }
+
+    // Pagination numbers
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 10;
+    const skipNum = (pageNum - 1) * limitNum;
+
+    // Sorting rule
+    let sortObj = { createdAt: -1 };
+    if (sortBy === 'views') {
+      sortObj = { views: -1, createdAt: -1 };
+    }
+
+    let posts;
+    let total;
+
+    if (sortBy === 'likes') {
+      // Custom aggregation to sort by likes array size
+      const pipeline = [
+        { $match: filter },
+        { $addFields: { likesCount: { $size: { $ifNull: ['$likes', []] } } } },
+        { $sort: { likesCount: -1, createdAt: -1 } },
+        { $facet: {
+            metadata: [{ $count: 'total' }],
+            data: [{ $skip: skipNum }, { $limit: limitNum }]
+          }
+        }
+      ];
+      
+      const aggregationResult = await Post.aggregate(pipeline);
+      posts = aggregationResult[0].data || [];
+      total = aggregationResult[0].metadata[0]?.total || 0;
+      
+      // Populate author details on aggregation objects
+      await Post.populate(posts, { path: 'author', select: 'name email' });
+    } else {
+      total = await Post.countDocuments(filter);
+      posts = await Post.find(filter)
+        .populate('author', 'name email')
+        .sort(sortObj)
+        .skip(skipNum)
+        .limit(limitNum);
+    }
+
+    res.status(200).json({
+      success: true,
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum),
+      count: posts.length,
+      posts,
+    });
   } catch (error) {
     next(error);
   }
@@ -230,6 +303,164 @@ const generateAiContent = async (req, res, next) => {
   }
 };
 
+// @desc    Upload cover image to Cloudinary (falls back to Base64 in developer mode)
+// @route   POST /api/posts/upload
+// @access  Private
+const uploadImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      res.status(400);
+      throw new Error('Please select an image file to upload');
+    }
+
+    if (process.env.CLOUDINARY_API_KEY) {
+      const imageUrl = await uploadToCloudinary(req.file.buffer);
+      res.status(200).json({ success: true, imageUrl });
+    } else {
+      // Offline fallback: convert to base64 Data URI
+      const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      res.status(200).json({ success: true, imageUrl: base64Image });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Increment post view count
+// @route   PUT /api/posts/:id/view
+// @access  Public
+const incrementViews = async (req, res, next) => {
+  try {
+    const post = await Post.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }, { new: true });
+    if (!post) {
+      res.status(404);
+      throw new Error('Post not found');
+    }
+    res.status(200).json({ success: true, views: post.views });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Toggle user like status on post
+// @route   POST /api/posts/:id/like
+// @access  Private
+const toggleLike = async (req, res, next) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      res.status(404);
+      throw new Error('Post not found');
+    }
+
+    const userId = req.user._id;
+    const isLiked = post.likes.includes(userId);
+
+    if (isLiked) {
+      post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
+    } else {
+      post.likes.push(userId);
+    }
+
+    await post.save();
+    res.status(200).json({ success: true, likesCount: post.likes.length, isLiked: !isLiked });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Toggle user bookmark status on post
+// @route   POST /api/posts/:id/bookmark
+// @access  Private
+const toggleBookmark = async (req, res, next) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      res.status(404);
+      throw new Error('Post not found');
+    }
+
+    const userId = req.user._id;
+    const isBookmarked = post.bookmarks.includes(userId);
+
+    if (isBookmarked) {
+      post.bookmarks = post.bookmarks.filter((id) => id.toString() !== userId.toString());
+    } else {
+      post.bookmarks.push(userId);
+    }
+
+    await post.save();
+    res.status(200).json({ success: true, isBookmarked: !isBookmarked });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Add comment to blog post
+// @route   POST /api/posts/:id/comments
+// @access  Private
+const addComment = async (req, res, next) => {
+  const { content, parentId } = req.body;
+  try {
+    if (!content) {
+      res.status(400);
+      throw new Error('Comment content is required');
+    }
+
+    const comment = await Comment.create({
+      post: req.params.id,
+      author: req.user._id,
+      content,
+      parentId: parentId || null,
+    });
+
+    const populated = await comment.populate('author', 'name email');
+    res.status(201).json({ success: true, comment: populated });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get comments for a blog post
+// @route   GET /api/posts/:id/comments
+// @access  Public
+const getComments = async (req, res, next) => {
+  try {
+    const comments = await Comment.find({ post: req.params.id })
+      .populate('author', 'name email')
+      .sort({ createdAt: 1 });
+    res.status(200).json({ success: true, comments });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete comment (and its replies)
+// @route   DELETE /api/posts/comments/:commentId
+// @access  Private
+const deleteComment = async (req, res, next) => {
+  try {
+    const comment = await Comment.findById(req.params.commentId);
+    if (!comment) {
+      res.status(404);
+      throw new Error('Comment not found');
+    }
+
+    if (comment.author.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to delete this comment');
+    }
+
+    // Delete nested replies recursively
+    await Comment.deleteMany({ parentId: comment._id });
+    await comment.deleteOne();
+
+    res.status(200).json({ success: true, message: 'Comment removed successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createPost,
   getPosts,
@@ -237,4 +468,11 @@ module.exports = {
   updatePost,
   deletePost,
   generateAiContent,
+  uploadImage,
+  incrementViews,
+  toggleLike,
+  toggleBookmark,
+  addComment,
+  getComments,
+  deleteComment,
 };

@@ -36,6 +36,8 @@ const Dashboard = () => {
   const [newSummary, setNewSummary] = useState('');
   const [newContent, setNewContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [coverImage, setCoverImage] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Blog CRUD states
   const [posts, setPosts] = useState([]);
@@ -73,6 +75,7 @@ const Dashboard = () => {
           description: newSummary || `Draft of ${newTitle}`,
           content: newContent,
           category: newTag,
+          coverImage,
           status: 'draft',
         };
 
@@ -92,7 +95,7 @@ const Dashboard = () => {
     }, 5000); // 5 seconds of inactivity triggers autosave
 
     return () => clearTimeout(delayDebounceFn);
-  }, [newTitle, newContent, newSummary, newTag, activeTab]);
+  }, [newTitle, newContent, newSummary, newTag, coverImage, activeTab]);
 
   const fetchUserPosts = async () => {
     setLoadingPosts(true);
@@ -118,6 +121,31 @@ const Dashboard = () => {
     navigate('/login');
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    setUploadingImage(true);
+    const toastId = toast.loading('Uploading cover image...');
+    try {
+      const response = await api.post('/posts/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setCoverImage(response.data?.imageUrl || '');
+      toast.success('Cover image uploaded successfully!', { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error('Image upload failed', { id: toastId });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handlePublish = async (e, status = 'published') => {
     if (e) e.preventDefault();
     if (!newTitle || !newSummary || !newContent) {
@@ -130,6 +158,7 @@ const Dashboard = () => {
       description: newSummary,
       content: newContent,
       category: newTag,
+      coverImage,
       status,
     };
     try {
@@ -143,6 +172,7 @@ const Dashboard = () => {
       setNewTitle('');
       setNewSummary('');
       setNewContent('');
+      setCoverImage('');
       setEditPostId(null);
       setActiveTab(status === 'published' ? 'my-blogs' : 'drafts');
     } catch (error) {
@@ -255,6 +285,7 @@ const Dashboard = () => {
     setNewSummary(post.description || '');
     setNewContent(post.content);
     setNewTag(post.category);
+    setCoverImage(post.coverImage || '');
     setActiveTab('create-blog');
   };
 
@@ -514,6 +545,31 @@ const Dashboard = () => {
                       onChange={(e) => setNewTitle(e.target.value)} 
                       required 
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-slate-350 text-left">Cover Image</label>
+                    <div className="flex gap-4 items-center">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-violet-950/40 file:text-violet-400 hover:file:bg-violet-950/70 file:cursor-pointer" 
+                      />
+                      {uploadingImage && <span className="text-xs text-slate-500">Uploading...</span>}
+                    </div>
+                    {coverImage && (
+                      <div className="mt-3 relative w-full h-40 bg-slate-950 border border-slate-800 rounded-lg overflow-hidden flex items-center justify-center">
+                        <img src={coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
+                        <button 
+                          type="button" 
+                          onClick={() => setCoverImage('')}
+                          className="absolute top-2 right-2 p-1.5 bg-rose-600 hover:bg-rose-500 rounded-full text-white cursor-pointer"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>

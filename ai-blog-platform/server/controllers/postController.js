@@ -1,5 +1,6 @@
 const Post = require('../models/Post');
 const Comment = require('../models/Comment');
+const User = require('../models/User');
 const cloudinary = require('../config/cloudinary');
 
 // Helper to upload image buffers to Cloudinary using streams
@@ -87,12 +88,19 @@ const getPosts = async (req, res, next) => {
       }
     }
 
-    // Search query matches title, description, or content
+    // Search query matches title, description, content, category, tags, or author name
     if (search) {
+      const User = require('../models/User');
+      const matchingUsers = await User.find({ name: { $regex: search, $options: 'i' } }).select('_id');
+      const userIds = matchingUsers.map((u) => u._id);
+
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } },
         { content: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } },
+        { tags: { $in: [new RegExp(search, 'i')] } },
+        { author: { $in: userIds } },
       ];
     }
 
@@ -461,6 +469,148 @@ const deleteComment = async (req, res, next) => {
   }
 };
 
+// @desc    Get all comments platform-wide (Admin only)
+// @route   GET /api/posts/comments/admin/all
+// @access  Private/Admin
+const getAllComments = async (req, res, next) => {
+  try {
+    const comments = await Comment.find({})
+      .populate('author', 'name email')
+      .populate('post', 'title')
+      .sort({ createdAt: -1 });
+    res.status(200).json({ success: true, comments });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get user analytics statistics
+// @route   GET /api/posts/analytics/my-stats
+// @access  Private
+const getMyStats = async (req, res, next) => {
+  try {
+    const posts = await Post.find({ author: req.user._id });
+    
+    const totalPosts = posts.length;
+    const publishedCount = posts.filter(p => p.status === 'published').length;
+    const draftCount = posts.filter(p => p.status === 'draft').length;
+    
+    let totalViews = 0;
+    let totalLikes = 0;
+    let totalBookmarks = 0;
+    let totalReadMinutes = 0;
+    
+    posts.forEach(p => {
+      totalViews += p.views || 0;
+      totalLikes += p.likes?.length || 0;
+      totalBookmarks += p.bookmarks?.length || 0;
+      
+      const match = p.readTime?.match(/\d+/);
+      if (match) {
+        totalReadMinutes += parseInt(match[0], 10);
+      }
+    });
+
+    // Get total comments on user's posts
+    const myPostIds = posts.map(p => p._id);
+    const totalComments = await Comment.countDocuments({ post: { $in: myPostIds } });
+
+    // Categories breakdown
+    const categoryCounts = {};
+    posts.forEach(p => {
+      categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+    });
+
+    const categoryData = Object.keys(categoryCounts).map(cat => ({
+      category: cat,
+      count: categoryCounts[cat]
+    }));
+
+    // Views/Likes trend data for the charting component
+    const blogViewsData = posts.slice(0, 10).map(p => ({
+      title: p.title.length > 20 ? p.title.slice(0, 17) + '...' : p.title,
+      views: p.views || 0,
+      likes: p.likes?.length || 0
+    }));
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalPosts,
+        publishedCount,
+        draftCount,
+        totalViews,
+        totalLikes,
+        totalBookmarks,
+        totalComments,
+        totalReadMinutes,
+        categoryData,
+        blogViewsData
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get platform-wide admin statistics
+// @route   GET /api/posts/analytics/admin-stats
+// @access  Private/Admin
+const getAdminStats = async (req, res, next) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalComments = await Comment.countDocuments();
+    
+    const posts = await Post.find({});
+    const totalPosts = posts.length;
+    const publishedCount = posts.filter(p => p.status === 'published').length;
+    const draftCount = posts.filter(p => p.status === 'draft').length;
+    
+    let totalViews = 0;
+    posts.forEach(p => {
+      totalViews += p.views || 0;
+    });
+
+    // Categories breakdown platform-wide
+    const categoryCounts = {};
+    posts.forEach(p => {
+      categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+    });
+
+    const categoryData = Object.keys(categoryCounts).map(cat => ({
+      category: cat,
+      count: categoryCounts[cat]
+    }));
+
+    // Top posts by views
+    const topPosts = posts
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 5)
+      .map(p => ({
+        _id: p._id,
+        title: p.title,
+        views: p.views || 0,
+        likes: p.likes?.length || 0
+      }));
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalComments,
+        totalPosts,
+        publishedCount,
+        draftCount,
+        totalViews,
+        categoryData,
+        topPosts
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createPost,
   getPosts,
@@ -475,4 +625,7 @@ module.exports = {
   addComment,
   getComments,
   deleteComment,
+  getMyStats,
+  getAdminStats,
+  getAllComments,
 };

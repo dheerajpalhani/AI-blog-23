@@ -41,12 +41,22 @@ const Home = () => {
     }
   };
 
+  // Debounce search input to avoid hitting backend on every keystroke
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchInput]);
+
   useEffect(() => {
     fetchPosts();
   }, [category, sortBy, page, search]);
 
   const handleSearchSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setPage(1);
     setSearch(searchInput);
   };

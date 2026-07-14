@@ -13,11 +13,19 @@ const {
   addComment,
   getComments,
   deleteComment,
+  getMyStats,
+  getAdminStats,
+  getAllComments,
 } = require('../controllers/postController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
+
+// Analytics paths (must go above dynamic /:id to prevent routing clashes)
+router.get('/analytics/my-stats', protect, getMyStats);
+router.get('/analytics/admin-stats', protect, admin, getAdminStats);
+router.get('/comments/admin/all', protect, admin, getAllComments);
 
 // Public / Private listings and detail retrieval
 router.get('/', getPosts);

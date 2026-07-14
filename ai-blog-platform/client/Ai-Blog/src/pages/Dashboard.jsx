@@ -17,12 +17,14 @@ import {
   Sparkles, 
   TrendingUp,
   LogOut,
-  Trash2
+  Trash2,
+  Shield
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import AnalyticsChart from '../components/AnalyticsChart';
 
 const Dashboard = () => {
   const { user, logout } = useAuthStore();
@@ -49,6 +51,36 @@ const Dashboard = () => {
   const [wordCount, setWordCount] = useState(0);
   const [liveReadTime, setLiveReadTime] = useState('1 min read');
   const [autosaveStatus, setAutosaveStatus] = useState('');
+
+  // Profile edit states
+  const [profileName, setProfileName] = useState(user?.name || '');
+  const [profileEmail, setProfileEmail] = useState(user?.email || '');
+  const [profileBio, setProfileBio] = useState(user?.bio || '');
+  const [profileAvatar, setProfileAvatar] = useState(user?.avatar || '');
+  const [profileTwitter, setProfileTwitter] = useState(user?.socialLinks?.twitter || '');
+  const [profileLinkedin, setProfileLinkedin] = useState(user?.socialLinks?.linkedin || '');
+  const [profileGithub, setProfileGithub] = useState(user?.socialLinks?.github || '');
+  
+  // Password states
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Analytics states
+  const [myStats, setMyStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  // Bookmarks state
+  const [bookmarkedPosts, setBookmarkedPosts] = useState([]);
+  const [loadingBookmarks, setLoadingBookmarks] = useState(false);
+
+  // Admin panel states
+  const [adminStats, setAdminStats] = useState(null);
+  const [loadingAdminStats, setLoadingAdminStats] = useState(false);
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [adminPosts, setAdminPosts] = useState([]);
+  const [adminComments, setAdminComments] = useState([]);
+  const [adminTab, setAdminTab] = useState('users'); // users, blogs, comments, stats
 
   // Calculate live word count & reading time
   useEffect(() => {
@@ -109,9 +141,204 @@ const Dashboard = () => {
     }
   };
 
+  // Sync profile editing fields when user details update
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileEmail(user.email || '');
+      setProfileBio(user.bio || '');
+      setProfileAvatar(user.avatar || '');
+      setProfileTwitter(user.socialLinks?.twitter || '');
+      setProfileLinkedin(user.socialLinks?.linkedin || '');
+      setProfileGithub(user.socialLinks?.github || '');
+    }
+  }, [user]);
+
+  const fetchMyStats = async () => {
+    setLoadingStats(true);
+    try {
+      const res = await api.get('/posts/analytics/my-stats');
+      setMyStats(res.data?.stats);
+    } catch (e) {
+      console.error('Failed to load personal analytics:', e);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  const fetchBookmarks = async () => {
+    setLoadingBookmarks(true);
+    try {
+      const response = await api.get('/posts');
+      const allPublished = response.data?.posts || [];
+      const uId = user?._id || user?.id;
+      const filtered = allPublished.filter((p) => p.bookmarks?.includes(uId));
+      setBookmarkedPosts(filtered);
+    } catch (e) {
+      console.error('Failed to load bookmarked posts:', e);
+    } finally {
+      setLoadingBookmarks(false);
+    }
+  };
+
+  const fetchAdminUsers = async () => {
+    try {
+      const res = await api.get('/auth/users');
+      setAdminUsers(res.data?.users || []);
+    } catch (e) {
+      console.error('Failed to load admin users:', e);
+    }
+  };
+
+  const fetchAdminPosts = async () => {
+    try {
+      const res = await api.get('/posts');
+      setAdminPosts(res.data?.posts || []);
+    } catch (e) {
+      console.error('Failed to load admin articles:', e);
+    }
+  };
+
+  const fetchAdminComments = async () => {
+    try {
+      const res = await api.get('/posts/comments/admin/all');
+      setAdminComments(res.data?.comments || []);
+    } catch (e) {
+      console.error('Failed to load admin comments:', e);
+    }
+  };
+
+  const fetchAdminStats = async () => {
+    setLoadingAdminStats(true);
+    try {
+      const res = await api.get('/posts/analytics/admin-stats');
+      setAdminStats(res.data?.stats);
+    } catch (e) {
+      console.error('Failed to load admin stats:', e);
+    } finally {
+      setLoadingAdminStats(false);
+    }
+  };
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    if (newPassword && newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    const payload = {
+      name: profileName,
+      bio: profileBio,
+      avatar: profileAvatar,
+      socialLinks: {
+        twitter: profileTwitter,
+        linkedin: profileLinkedin,
+        github: profileGithub,
+      },
+    };
+
+    if (newPassword) {
+      payload.password = newPassword;
+    }
+
+    const toastId = toast.loading('Saving profile changes...');
+    try {
+      const res = await api.put('/auth/profile', payload);
+      if (res.data?.success) {
+        useAuthStore.setState({ user: res.data.user });
+        toast.success('Profile updated successfully!', { id: toastId });
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || 'Failed to update profile', { id: toastId });
+    }
+  };
+
+  const handleProfileAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const toastId = toast.loading('Uploading avatar...');
+    try {
+      const response = await api.post('/posts/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setProfileAvatar(response.data?.imageUrl || '');
+      toast.success('Avatar uploaded successfully!', { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error('Upload failed', { id: toastId });
+    }
+  };
+
+  const handleToggleUserRole = async (userId, currentRole) => {
+    const nextRole = currentRole === 'admin' ? 'user' : 'admin';
+    try {
+      await api.put(`/auth/users/${userId}/role`, { role: nextRole });
+      toast.success(`User role changed to ${nextRole}`);
+      fetchAdminUsers();
+    } catch (e) {
+      toast.error('Failed to change user role');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Delete this user account permanently?')) return;
+    try {
+      await api.delete(`/auth/users/${userId}`);
+      toast.success('User deleted');
+      fetchAdminUsers();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to delete user');
+    }
+  };
+
+  const handleAdminDeletePost = async (postId) => {
+    if (!window.confirm('Remove this post permanently from the platform?')) return;
+    try {
+      await api.delete(`/posts/${postId}`);
+      toast.success('Post removed');
+      fetchAdminPosts();
+    } catch (e) {
+      toast.error('Failed to remove post');
+    }
+  };
+
+  const handleAdminDeleteComment = async (commentId) => {
+    if (!window.confirm('Delete this comment permanently?')) return;
+    try {
+      await api.delete(`/posts/comments/${commentId}`);
+      toast.success('Comment removed');
+      fetchAdminComments();
+    } catch (e) {
+      toast.error('Failed to remove comment');
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'overview' || activeTab === 'my-blogs' || activeTab === 'drafts') {
       fetchUserPosts();
+    }
+    if (activeTab === 'analytics') {
+      fetchMyStats();
+    }
+    if (activeTab === 'bookmarks') {
+      fetchBookmarks();
+    }
+    if (activeTab === 'admin') {
+      fetchAdminUsers();
+      fetchAdminPosts();
+      fetchAdminComments();
+      fetchAdminStats();
     }
   }, [activeTab]);
 
@@ -313,6 +540,10 @@ const Dashboard = () => {
     { id: 'profile', name: 'Profile', icon: UserCircle },
     { id: 'settings', name: 'Settings', icon: SettingsIcon },
   ];
+
+  if (user && user.role === 'admin') {
+    menuItems.push({ id: 'admin', name: 'Admin Panel', icon: Shield });
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
@@ -807,60 +1038,242 @@ const Dashboard = () => {
 
           {/* 5. Analytics Tab */}
           {activeTab === 'analytics' && (
-            <div className="space-y-6">
-              <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl">
-                <h3 className="text-lg font-bold mb-6">Views Over Time</h3>
-                {/* Simulated Chart */}
-                <div className="flex items-end justify-between gap-2 h-48 px-4 pt-4 border-b border-slate-800 border-l">
-                  {[45, 60, 30, 80, 50, 95, 70].map((val, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                      <div className="w-full bg-violet-600 group-hover:bg-violet-500 rounded-t transition-all duration-300" style={{ height: `${val}%` }}></div>
-                      <span className="text-[10px] text-slate-500 font-semibold">Day {i + 1}</span>
+            <div className="space-y-8">
+              {loadingStats ? (
+                <div className="text-center py-10 text-slate-400">Compiling analytics reports...</div>
+              ) : !myStats ? (
+                <div className="text-center py-10 text-slate-500">Failed to load analytics statistics.</div>
+              ) : (
+                <>
+                  {/* Stats Cards Row */}
+                  <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl text-left">
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Total Blogs</p>
+                      <h4 className="text-2xl font-bold text-white mb-2">{myStats.totalPosts}</h4>
+                      <p className="text-[10px] text-slate-400">
+                        {myStats.publishedCount} Published • {myStats.draftCount} Drafts
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl text-left">
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Total Views</p>
+                      <h4 className="text-2xl font-bold text-white mb-2">{myStats.totalViews}</h4>
+                      <p className="text-[10px] text-cyan-400">Avg: {myStats.totalPosts > 0 ? Math.round(myStats.totalViews / myStats.totalPosts) : 0} views/post</p>
+                    </div>
+                    <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl text-left">
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Total Likes</p>
+                      <h4 className="text-2xl font-bold text-white mb-2">{myStats.totalLikes}</h4>
+                      <p className="text-[10px] text-violet-400">{myStats.totalBookmarks} Bookmarks saved</p>
+                    </div>
+                    <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl text-left">
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Writing Time</p>
+                      <h4 className="text-2xl font-bold text-white mb-2">{myStats.totalReadMinutes} m</h4>
+                      <p className="text-[10px] text-emerald-400">{myStats.totalComments} Comments received</p>
+                    </div>
+                  </div>
+
+                  {/* Charts Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2 text-left">
+                      <h3 className="text-sm font-bold text-slate-350">Blog Post Views (Top 10)</h3>
+                      <AnalyticsChart type="bar" data={myStats.blogViewsData} xKey="title" yKey="views" />
+                    </div>
+                    <div className="space-y-2 text-left">
+                      <h3 className="text-sm font-bold text-slate-350">Blog Likes Trend</h3>
+                      <AnalyticsChart type="line" data={myStats.blogViewsData} xKey="title" yKey="likes" />
+                    </div>
+                  </div>
+
+                  {/* Category weights */}
+                  <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl text-left">
+                    <h3 className="text-sm font-bold text-slate-300 mb-4">Blog Posts by Category</h3>
+                    {myStats.categoryData?.length === 0 ? (
+                      <p className="text-xs text-slate-500 italic">No posts categorised yet</p>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {myStats.categoryData.map((cat, idx) => (
+                          <div key={idx} className="p-4 bg-slate-950/60 border border-slate-850 rounded-lg">
+                            <p className="text-xs font-semibold text-violet-400 truncate mb-1">{cat.category}</p>
+                            <h4 className="text-lg font-bold text-white">{cat.count} {cat.count === 1 ? 'post' : 'posts'}</h4>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {/* 6. Bookmarks Tab */}
           {activeTab === 'bookmarks' && (
-            <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl">
-              <p className="text-slate-400 text-sm">No saved bookmarks yet. Go explore the Home page to save articles!</p>
+            <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl text-left">
+              {loadingBookmarks ? (
+                <div className="text-center py-6 text-slate-400">Fetching bookmarks...</div>
+              ) : bookmarkedPosts.length === 0 ? (
+                <div className="text-center py-6 text-slate-500">
+                  No saved bookmarks yet. Go explore the Home page to save articles!
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-slate-400 text-sm">You have bookmarked {bookmarkedPosts.length} post(s).</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {bookmarkedPosts.map((blog) => (
+                      <Link 
+                        to={`/blog/${blog._id}`} 
+                        key={blog._id} 
+                        className="p-4 rounded-lg bg-slate-950 border border-slate-850 flex gap-4 hover:border-slate-800 transition text-left"
+                      >
+                        <div 
+                          className="w-20 h-20 rounded bg-slate-800 bg-cover bg-center shrink-0"
+                          style={{ 
+                            backgroundImage: blog.coverImage 
+                              ? `url(${blog.coverImage})` 
+                              : `linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(6, 182, 212, 0.4))` 
+                          }}
+                        />
+                        <div className="overflow-hidden">
+                          <span className="text-[9px] font-bold text-violet-400 uppercase tracking-wider block mb-1">
+                            {blog.category}
+                          </span>
+                          <h4 className="font-bold text-white text-sm line-clamp-2 mb-1">{blog.title}</h4>
+                          <span className="text-[10px] text-slate-500 block">By {blog.author?.name || 'Author'}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* 7. Profile Tab */}
           {activeTab === 'profile' && (
-            <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl max-w-2xl mx-auto">
-              <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-violet-500 to-cyan-500 flex items-center justify-center text-2xl font-bold text-white shadow-xl shadow-violet-500/10">
-                  {user?.name?.[0]?.toUpperCase() || 'U'}
+            <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl max-w-2xl mx-auto text-left">
+              <div className="flex flex-col sm:flex-row items-center gap-6 mb-8 pb-6 border-b border-slate-800">
+                <div className="relative group shrink-0">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-violet-500 to-cyan-500 flex items-center justify-center text-2xl font-bold text-white shadow-xl overflow-hidden">
+                    {profileAvatar ? (
+                      <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
+                    ) : (
+                      profileName?.[0]?.toUpperCase() || 'U'
+                    )}
+                  </div>
+                  <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white font-semibold rounded-full cursor-pointer transition">
+                    Upload
+                    <input type="file" accept="image/*" className="hidden" onChange={handleProfileAvatarUpload} />
+                  </label>
                 </div>
                 <div className="text-center sm:text-left">
-                  <h3 className="text-xl font-bold text-white">{user?.name || 'Author'}</h3>
-                  <p className="text-sm text-slate-400">{user?.email || 'author@blogforge.com'}</p>
-                  <p className="text-xs text-slate-500 mt-1">Access Tier: Professional Writer</p>
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    {profileName || 'Author'}
+                    {user?.role === 'admin' && (
+                      <span className="px-2 py-0.5 bg-violet-950 text-violet-400 text-[10px] font-bold uppercase rounded border border-violet-900">
+                        Admin
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-sm text-slate-400">{profileEmail}</p>
+                  <p className="text-xs text-slate-500 mt-1">Profile Avatar & BIO can be loaded into public article author cards.</p>
                 </div>
               </div>
 
-              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); toast.success('Profile updated (Simulated)'); }}>
+              <form className="space-y-6" onSubmit={handleProfileUpdate}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold mb-2 text-slate-400 text-left">Full Name</label>
-                    <input type="text" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white" defaultValue={user?.name} />
+                    <label className="block text-xs font-semibold mb-2 text-slate-400">Full Name</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-violet-600 transition" 
+                      value={profileName} 
+                      onChange={(e) => setProfileName(e.target.value)}
+                      required
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold mb-2 text-slate-400 text-left">Email Address</label>
-                    <input type="email" className="w-full bg-slate-950 border border-slate-850 rounded-lg px-4 py-2.5 text-sm text-slate-500" defaultValue={user?.email} disabled />
+                    <label className="block text-xs font-semibold mb-2 text-slate-400">Email Address</label>
+                    <input 
+                      type="email" 
+                      className="w-full bg-slate-950 border border-slate-850 rounded-lg px-4 py-2.5 text-sm text-slate-500" 
+                      value={profileEmail} 
+                      disabled 
+                    />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-xs font-semibold mb-2 text-slate-400 text-left">Short Bio</label>
-                  <textarea className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white h-24" placeholder="Tell us about yourself..."></textarea>
+                  <label className="block text-xs font-semibold mb-2 text-slate-400">BIO</label>
+                  <textarea 
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white h-20 focus:outline-none focus:border-violet-600 transition"
+                    placeholder="Tell readers about yourself..."
+                    value={profileBio}
+                    onChange={(e) => setProfileBio(e.target.value)}
+                  />
                 </div>
-                <button type="submit" className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-sm font-semibold rounded-lg text-white transition">
-                  Save Profile
+
+                {/* Social Links Row */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-350 uppercase tracking-wider">Social Links</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-semibold mb-1 text-slate-500">Twitter URL</label>
+                      <input 
+                        type="text" 
+                        placeholder="https://twitter.com/username"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-600 transition"
+                        value={profileTwitter}
+                        onChange={(e) => setProfileTwitter(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold mb-1 text-slate-500">LinkedIn URL</label>
+                      <input 
+                        type="text" 
+                        placeholder="https://linkedin.com/in/username"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-600 transition"
+                        value={profileLinkedin}
+                        onChange={(e) => setProfileLinkedin(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold mb-1 text-slate-500">GitHub URL</label>
+                      <input 
+                        type="text" 
+                        placeholder="https://github.com/username"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-600 transition"
+                        value={profileGithub}
+                        onChange={(e) => setProfileGithub(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Password editing */}
+                <div className="space-y-4 pt-4 border-t border-slate-800">
+                  <h4 className="text-xs font-bold text-slate-350 uppercase tracking-wider">Update Password (Optional)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-semibold mb-1 text-slate-500">New Password</label>
+                      <input 
+                        type="password" 
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:outline-none focus:border-violet-600 transition"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold mb-1 text-slate-500">Confirm New Password</label>
+                      <input 
+                        type="password" 
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:outline-none focus:border-violet-600 transition"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" className="px-6 py-2.5 bg-violet-600 hover:bg-violet-500 text-sm font-semibold rounded-lg text-white transition cursor-pointer">
+                  Save Changes
                 </button>
               </form>
             </div>
@@ -868,13 +1281,13 @@ const Dashboard = () => {
 
           {/* 8. Settings Tab */}
           {activeTab === 'settings' && (
-            <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl max-w-2xl mx-auto space-y-6">
+            <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl max-w-2xl mx-auto space-y-6 text-left">
               <div>
                 <h3 className="font-bold text-white mb-2">Workspace Settings</h3>
                 <p className="text-xs text-slate-500 mb-4">Configure preferences for drafts auto-save and newsletter mailings.</p>
                 <div className="space-y-3">
                   {[
-                    { label: 'Auto-save drafts', desc: 'Saves your changes locally every 30 seconds' },
+                    { label: 'Auto-save drafts', desc: 'Saves your changes locally every 5 seconds' },
                     { label: 'Email notifications', desc: 'Receive emails when your articles get new views or comments' }
                   ].map((sett, i) => (
                     <label key={i} className="flex justify-between items-center p-3 rounded-lg bg-slate-950 border border-slate-850 cursor-pointer">
@@ -882,11 +1295,213 @@ const Dashboard = () => {
                         <p className="text-sm font-semibold text-slate-200">{sett.label}</p>
                         <p className="text-xs text-slate-500">{sett.desc}</p>
                       </div>
-                      <input type="checkbox" defaultChecked className="w-4 h-4 accent-violet-600" />
+                      <input type="checkbox" defaultChecked className="w-4 h-4 accent-violet-600 cursor-pointer" />
                     </label>
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* 9. Admin Moderation Tab */}
+          {activeTab === 'admin' && user?.role === 'admin' && (
+            <div className="space-y-6 text-left">
+              {/* Sub-navigation bar inside Admin Panel */}
+              <div className="flex border-b border-slate-800 gap-6 pb-2">
+                {[
+                  { key: 'users', label: 'Manage Users' },
+                  { key: 'blogs', label: 'Moderate Blogs' },
+                  { key: 'comments', label: 'Moderate Comments' },
+                  { key: 'stats', label: 'Platform Stats' }
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setAdminTab(tab.key)}
+                    className={`pb-2 text-sm font-semibold transition border-b-2 cursor-pointer ${
+                      adminTab === tab.key 
+                        ? 'border-violet-650 text-white' 
+                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab 9A: Users Management */}
+              {adminTab === 'users' && (
+                <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl space-y-4">
+                  <p className="text-xs text-slate-400">Total users registered on platform: {adminUsers.length}</p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400 text-xs">
+                          <th className="py-3 font-semibold">User Info</th>
+                          <th className="py-3 font-semibold">Email</th>
+                          <th className="py-3 font-semibold">Role</th>
+                          <th className="py-3 font-semibold text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adminUsers.map(u => (
+                          <tr key={u._id} className="border-b border-slate-850 hover:bg-slate-950/20">
+                            <td className="py-3 font-medium text-white">{u.name}</td>
+                            <td className="py-3 text-slate-400">{u.email}</td>
+                            <td className="py-3">
+                              <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded ${
+                                u.role === 'admin' ? 'bg-violet-950 text-violet-400' : 'bg-slate-950 text-slate-400'
+                              }`}>
+                                {u.role}
+                              </span>
+                            </td>
+                            <td className="py-3 text-right space-x-2">
+                              {u._id !== user._id && (
+                                <>
+                                  <button 
+                                    onClick={() => handleToggleUserRole(u._id, u.role)}
+                                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-750 text-[10px] font-bold rounded cursor-pointer transition"
+                                  >
+                                    Role
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteUser(u._id)}
+                                    className="px-2.5 py-1 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 text-[10px] font-bold rounded cursor-pointer transition"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 9B: Blogs Moderation */}
+              {adminTab === 'blogs' && (
+                <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl space-y-4">
+                  <p className="text-xs text-slate-400">Total posts on platform: {adminPosts.length}</p>
+                  <div className="space-y-3">
+                    {adminPosts.map((blog) => (
+                      <div key={blog._id} className="p-4 rounded-lg bg-slate-950 border border-slate-850 flex items-center justify-between hover:border-slate-800 transition">
+                        <div className="flex gap-4 items-center overflow-hidden">
+                          <div 
+                            className="w-12 h-12 bg-slate-800 bg-cover bg-center rounded shrink-0" 
+                            style={{ 
+                              backgroundImage: blog.coverImage 
+                                ? `url(${blog.coverImage})` 
+                                : `linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(6, 182, 212, 0.4))` 
+                            }} 
+                          />
+                          <div className="overflow-hidden">
+                            <h4 className="font-bold text-white text-sm line-clamp-1 mb-0.5">{blog.title}</h4>
+                            <span className="text-[10px] text-slate-500">
+                              By {blog.author?.name || 'Author'} • {blog.category} • {blog.readTime || '3 min read'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Link 
+                            to={`/blog/${blog._id}`} 
+                            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[10px] font-bold rounded-lg cursor-pointer"
+                          >
+                            View
+                          </Link>
+                          <button 
+                            onClick={() => handleAdminDeletePost(blog._id)}
+                            className="px-3 py-1.5 bg-rose-950/20 hover:bg-rose-950/40 text-rose-450 border border-rose-900/30 text-[10px] font-bold rounded-lg cursor-pointer transition"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 9C: Comments Moderation */}
+              {adminTab === 'comments' && (
+                <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl space-y-4">
+                  <p className="text-xs text-slate-400">Total comments: {adminComments.length}</p>
+                  <div className="space-y-3">
+                    {adminComments.length === 0 ? (
+                      <p className="text-sm text-slate-500 italic">No comments found platform-wide.</p>
+                    ) : (
+                      adminComments.map((com) => (
+                        <div key={com._id} className="p-4 rounded-lg bg-slate-950 border border-slate-850 flex items-start justify-between hover:border-slate-800 transition">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-xs font-semibold text-white">{com.author?.name || 'Author'}</span>
+                              <span className="text-[10px] text-slate-500">on "{com.post?.title || 'Unknown post'}"</span>
+                              <span className="text-[10px] text-slate-600">• {new Date(com.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-xs text-slate-350">{com.content}</p>
+                          </div>
+                          <button 
+                            onClick={() => handleAdminDeleteComment(com._id)}
+                            className="px-2.5 py-1.5 bg-rose-950/10 hover:bg-rose-950/30 border border-rose-950/20 text-rose-450 text-[10px] font-bold rounded cursor-pointer transition"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 9D: Platform Stats Charts */}
+              {adminTab === 'stats' && (
+                <div className="space-y-6">
+                  {loadingAdminStats ? (
+                    <div className="text-center py-6 text-slate-400">Loading platform-wide stats...</div>
+                  ) : !adminStats ? (
+                    <div className="text-center py-6 text-slate-500">Failed to compile admin stats.</div>
+                  ) : (
+                    <>
+                      {/* Metric cards */}
+                      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                        <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Total Users</p>
+                          <h4 className="text-2xl font-bold text-white">{adminStats.totalUsers}</h4>
+                        </div>
+                        <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Total Posts</p>
+                          <h4 className="text-2xl font-bold text-white">{adminStats.totalPosts}</h4>
+                        </div>
+                        <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Total Views</p>
+                          <h4 className="text-2xl font-bold text-white">{adminStats.totalViews}</h4>
+                        </div>
+                        <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Platform Comments</p>
+                          <h4 className="text-2xl font-bold text-white">{adminStats.totalComments}</h4>
+                        </div>
+                      </div>
+
+                      {/* Top Articles List */}
+                      <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl">
+                        <h3 className="text-sm font-bold text-slate-300 mb-4">Top 5 Most Viewed Articles</h3>
+                        <div className="space-y-2">
+                          {adminStats.topPosts?.map((tp, i) => (
+                            <div key={i} className="flex justify-between items-center py-2 border-b border-slate-850 text-xs">
+                              <span className="font-semibold text-white truncate max-w-md">{tp.title}</span>
+                              <div className="flex gap-4 text-slate-450">
+                                <span>{tp.views} views</span>
+                                <span>{tp.likes} likes</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

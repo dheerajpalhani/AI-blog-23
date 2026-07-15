@@ -64,7 +64,8 @@ const Home = () => {
   };
 
   return (
-    <div className="home-container">
+    <div className="main-content">
+      <div className="home-container">
       <motion.section 
         className="home-hero"
         initial={{ opacity: 0, y: -20 }}
@@ -218,6 +219,7 @@ const Home = () => {
         </>
       )}
     </div>
+  </div>
   );
 };
 

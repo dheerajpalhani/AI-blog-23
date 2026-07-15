@@ -20,55 +20,110 @@ const Login = () => {
     }
   };
 
+  const handleDemoLogin = async () => {
+    const demoEmail = 'demo@blogforge.com';
+    const demoPassword = 'password123';
+    const demoName = 'Demo Writer';
+    
+    const toastId = toast.loading('Initiating demo workspace...');
+    try {
+      // 1. Try to login directly
+      let result = await login(demoEmail, demoPassword);
+      if (result.success) {
+        toast.success('Welcome to Demo Workspace!', { id: toastId });
+        navigate('/dashboard');
+        return;
+      }
+      
+      // 2. Register first if the account doesn't exist
+      toast.loading('Provisioning demo database account...', { id: toastId });
+      const regResponse = await api.post('/auth/register', {
+        name: demoName,
+        email: demoEmail,
+        password: demoPassword
+      });
+      
+      if (regResponse.data?.success) {
+        // 3. Retry login
+        result = await login(demoEmail, demoPassword);
+        if (result.success) {
+          toast.success('Demo account provisioned and logged in!', { id: toastId });
+          navigate('/dashboard');
+          return;
+        }
+      }
+      toast.error('Authentication check failed', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Demo sandbox environment unavailable', { id: toastId });
+    }
+  };
+
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2 className="auth-title">Welcome Back</h2>
-        <p className="auth-subtitle">Sign in to your AI BlogForge account</p>
-        
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="form-group">
-            <label className="form-label">Email Address</label>
-            <input 
-              type="email" 
-              className="form-input" 
-              placeholder="name@example.com"
-              {...register('email', { 
-                required: 'Email is required',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address'
-                }
-              })} 
-            />
-            {errors.email && <span style={{ color: 'var(--error)', fontSize: '12px' }}>{errors.email.message}</span>}
-          </div>
+    <div className="main-content">
+      <div className="auth-container">
+        <div className="auth-card">
+          <h2 className="auth-title">Welcome Back</h2>
+          <p className="auth-subtitle">Sign in to your AI BlogForge account</p>
+          
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="form-group">
+              <label className="form-label">Email Address</label>
+              <input 
+                type="email" 
+                className="form-input" 
+                placeholder="name@example.com"
+                {...register('email', { 
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: 'Invalid email address'
+                  }
+                })} 
+              />
+              {errors.email && <span style={{ color: 'var(--error)', fontSize: '12px' }}>{errors.email.message}</span>}
+            </div>
 
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input 
-              type="password" 
-              className="form-input" 
-              placeholder="••••••••"
-              {...register('password', { 
-                required: 'Password is required',
-                minLength: {
-                  value: 6,
-                  message: 'Password must be at least 6 characters'
-                }
-              })} 
-            />
-            {errors.password && <span style={{ color: 'var(--error)', fontSize: '12px' }}>{errors.password.message}</span>}
-          </div>
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input 
+                type="password" 
+                className="form-input" 
+                placeholder="••••••••"
+                {...register('password', { 
+                  required: 'Password is required',
+                  minLength: {
+                    value: 6,
+                    message: 'Password must be at least 6 characters'
+                  }
+                })} 
+              />
+              {errors.password && <span style={{ color: 'var(--error)', fontSize: '12px' }}>{errors.password.message}</span>}
+            </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+            
+            <button 
+              type="button" 
+              onClick={handleDemoLogin}
+              className="btn btn-secondary" 
+              style={{ 
+                width: '100%', 
+                marginTop: '12px', 
+                background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.1))', 
+                borderColor: 'var(--primary)' 
+              }}
+            >
+              ✨ Quick Demo Access
+            </button>
+          </form>
 
-        <p className="auth-footer">
-          Don't have an account? <Link to="/register">Register here</Link>
-        </p>
+          <p className="auth-footer">
+            Don't have an account? <Link to="/register">Register here</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

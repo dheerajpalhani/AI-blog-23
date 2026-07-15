@@ -546,7 +546,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
+    <div className="flex min-h-[calc(100vh-73px)] bg-slate-950 text-slate-100 font-sans antialiased">
       {/* Mobile Sidebar Toggle */}
       <button 
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -557,19 +557,19 @@ const Dashboard = () => {
 
       {/* Sidebar Navigation */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-slate-900/90 border-r border-slate-800 backdrop-blur-md transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:block
+        fixed inset-y-0 left-0 z-40 w-64 bg-slate-900/90 border-r border-slate-800 backdrop-blur-md transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-[73px] lg:bottom-auto lg:left-auto lg:h-[calc(100vh-73px)] lg:block
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full">
           {/* Logo Area */}
-          <div className="p-6 border-b border-slate-800">
+          <div className="p-6 border-b border-slate-800 lg:hidden">
             <span className="text-2xl font-extrabold bg-gradient-to-r from-violet-500 to-cyan-400 bg-clip-text text-transparent tracking-tight">
               AI BlogForge
             </span>
           </div>
 
           {/* Menu Items */}
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-4 py-8 space-y-1.5 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -616,8 +616,8 @@ const Dashboard = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 overflow-y-auto bg-slate-950 p-6 lg:p-10">
-        <div className="max-w-6xl mx-auto mt-8 lg:mt-0">
+      <main className="flex-1 min-w-0 overflow-y-auto bg-slate-950 p-6 lg:p-12 lg:pt-14">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 mt-8 lg:mt-0">
           
           {/* Header Row */}
           <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center mb-8 pb-6 border-b border-slate-800/80">
@@ -655,13 +655,18 @@ const Dashboard = () => {
                 ].map((stat, i) => {
                   const StatIcon = stat.icon;
                   return (
-                    <div key={i} className="p-6 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition">
+                    <div 
+                      key={i} 
+                      className="p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-950/15 transition-all duration-300 rounded-2xl"
+                    >
                       <div className="flex justify-between items-start mb-4">
-                        <span className="text-sm font-medium text-slate-400">{stat.title}</span>
-                        <StatIcon className={stat.color} size={20} />
+                        <span className="text-sm font-semibold text-slate-400">{stat.title}</span>
+                        <div className="p-2 rounded-lg bg-slate-900/60">
+                          <StatIcon className={stat.color} size={20} />
+                        </div>
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold tracking-tight text-white">{stat.count}</span>
+                        <span className="text-3xl font-extrabold tracking-tight text-white">{stat.count}</span>
                         {stat.trend && (
                           <span className="text-xs font-semibold text-emerald-400 flex items-center gap-0.5">
                             <TrendingUp size={12} />
@@ -677,11 +682,11 @@ const Dashboard = () => {
               {/* Grid sections for activities & tags */}
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 {/* Recent Activities */}
-                <div className="lg:col-span-2 p-6 bg-slate-900 border border-slate-800 rounded-xl">
-                  <h3 className="text-lg font-bold mb-4">Recent Activities</h3>
+                <div className="lg:col-span-2 p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 rounded-2xl">
+                  <h3 className="text-lg font-bold mb-4 text-white">Recent Activities</h3>
                   <div className="space-y-4">
                     {posts.slice(0, 3).map((blog, i) => (
-                      <div key={blog._id} className="flex justify-between items-center p-3 rounded-lg bg-slate-950 border border-slate-850 hover:border-slate-800 transition">
+                      <div key={blog._id} className="flex justify-between items-center p-4 rounded-xl bg-slate-950/60 border border-slate-850/80 hover:border-slate-800 transition-all duration-200">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-slate-900 text-slate-300 rounded-lg">
                             <FileText size={16} />
@@ -693,7 +698,7 @@ const Dashboard = () => {
                             <span className="text-xs text-slate-500">{new Date(blog.updatedAt).toLocaleDateString()}</span>
                           </div>
                         </div>
-                        <span className="text-xs px-2 py-1 bg-slate-900 border border-slate-800 text-slate-400 rounded-full">{blog.category}</span>
+                        <span className="text-xs px-2.5 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full">{blog.category}</span>
                       </div>
                     ))}
                     {posts.length === 0 && (
@@ -703,8 +708,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* Popular Tags */}
-                <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl">
-                  <h3 className="text-lg font-bold mb-4">Tag Performance</h3>
+                <div className="p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 rounded-2xl">
+                  <h3 className="text-lg font-bold mb-4 text-white">Tag Performance</h3>
                   <div className="space-y-4">
                     {[
                       { name: 'Technology', percentage: posts.filter(p => p.category === 'Technology').length > 0 ? '80%' : '0%', color: 'bg-violet-600' },
@@ -713,7 +718,7 @@ const Dashboard = () => {
                       { name: 'Development', percentage: posts.filter(p => p.category === 'Development').length > 0 ? '30%' : '0%', color: 'bg-amber-500' }
                     ].map((tag, i) => (
                       <div key={i} className="space-y-1.5">
-                        <div className="flex justify-between text-xs font-semibold">
+                        <div className="flex justify-between text-xs font-semibold text-slate-300">
                           <span>{tag.name}</span>
                           <span>{tag.percentage}</span>
                         </div>

@@ -34,32 +34,30 @@ function App() {
       <Router>
         <div className="app-container">
           <Navbar />
-          <main className="main-content">
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/blog/:id" element={<BlogDetails />} />
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/create" 
-                  element={
-                    <ProtectedRoute>
-                      <CreatePost />
-                    </ProtectedRoute>
-                  } 
-                />
-              </Routes>
-            </Suspense>
-          </main>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/blog/:id" element={<BlogDetails />} />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/create" 
+                element={
+                  <ProtectedRoute>
+                    <CreatePost />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </Suspense>
           <Footer />
           <Toaster 
             position="top-center"

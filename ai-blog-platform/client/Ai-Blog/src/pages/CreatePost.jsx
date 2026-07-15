@@ -58,8 +58,9 @@ const CreatePost = () => {
   };
 
   return (
-    <div className="create-blog-container">
-      <h2 style={{ fontSize: '32px', marginBottom: '24px', textAlign: 'left' }}>Create New Post</h2>
+    <div className="main-content">
+      <div className="create-blog-container">
+        <h2 style={{ fontSize: '32px', marginBottom: '24px', textAlign: 'left' }}>Create New Post</h2>
       
       <form onSubmit={handleSubmit}>
         <div className="form-group">
@@ -138,6 +139,7 @@ const CreatePost = () => {
         </div>
       </form>
     </div>
+  </div>
   );
 };
 

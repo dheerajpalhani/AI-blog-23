@@ -268,8 +268,9 @@ const BlogDetails = () => {
   const shareUrl = encodeURIComponent(window.location.href);
 
   return (
-    <motion.div 
-      className="details-container"
+    <div className="main-content">
+      <motion.div 
+        className="details-container"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -426,6 +427,7 @@ const BlogDetails = () => {
         </div>
       )}
     </motion.div>
+  </div>
   );
 };
 

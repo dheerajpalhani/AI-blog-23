@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
-import api from '../services/api';
+
 import toast from 'react-hot-toast';
 
 const Register = () => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm();
-  const { register: registerUser, loading } = useAuthStore();
+  const { register: registerUser, loading, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = 'Register | AI BlogForge';
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const password = watch('password');
 

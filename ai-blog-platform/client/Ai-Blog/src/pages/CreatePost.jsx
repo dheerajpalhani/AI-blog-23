@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,10 @@ const CreatePost = () => {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Create Post | AI BlogForge';
+  }, []);
 
   const handleAiGenerate = async () => {
     if (!title) {
@@ -45,13 +49,12 @@ const CreatePost = () => {
     }
     setLoading(true);
     try {
-      await api.post('/posts', { title, description, tag, content });
+      await api.post('/posts', { title, description, category: tag, content });
       toast.success('Blog post published successfully!');
       navigate('/');
     } catch (error) {
-      console.error('Submit error, fallback simulate publish:', error);
-      toast.success('Successfully created draft (Simulated)!');
-      navigate('/');
+      console.error('Submit error:', error);
+      toast.error('Failed to publish article.');
     } finally {
       setLoading(false);
     }

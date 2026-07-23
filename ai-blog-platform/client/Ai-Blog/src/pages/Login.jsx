@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
@@ -7,8 +7,15 @@ import toast from 'react-hot-toast';
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const { login, loading } = useAuthStore();
+  const { login, loading, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = 'Login | AI BlogForge';
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const onSubmit = async (data) => {
     const result = await login(data.email, data.password);

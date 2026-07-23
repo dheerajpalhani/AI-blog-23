@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import { 
@@ -129,7 +129,7 @@ const Dashboard = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [newTitle, newContent, newSummary, newTag, coverImage, activeTab]);
 
-  const fetchUserPosts = async () => {
+  const fetchUserPosts = useCallback(async () => {
     setLoadingPosts(true);
     try {
       const response = await api.get('/posts?author=me');
@@ -139,7 +139,7 @@ const Dashboard = () => {
     } finally {
       setLoadingPosts(false);
     }
-  };
+  }, []);
 
   // Sync profile editing fields when user details update
   useEffect(() => {
@@ -154,7 +154,7 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const fetchMyStats = async () => {
+  const fetchMyStats = useCallback(async () => {
     setLoadingStats(true);
     try {
       const res = await api.get('/posts/analytics/my-stats');
@@ -164,9 +164,9 @@ const Dashboard = () => {
     } finally {
       setLoadingStats(false);
     }
-  };
+  }, []);
 
-  const fetchBookmarks = async () => {
+  const fetchBookmarks = useCallback(async () => {
     setLoadingBookmarks(true);
     try {
       const response = await api.get('/posts');
@@ -179,36 +179,36 @@ const Dashboard = () => {
     } finally {
       setLoadingBookmarks(false);
     }
-  };
+  }, [user]);
 
-  const fetchAdminUsers = async () => {
+  const fetchAdminUsers = useCallback(async () => {
     try {
       const res = await api.get('/auth/users');
       setAdminUsers(res.data?.users || []);
     } catch (e) {
       console.error('Failed to load admin users:', e);
     }
-  };
+  }, []);
 
-  const fetchAdminPosts = async () => {
+  const fetchAdminPosts = useCallback(async () => {
     try {
       const res = await api.get('/posts');
       setAdminPosts(res.data?.posts || []);
     } catch (e) {
       console.error('Failed to load admin articles:', e);
     }
-  };
+  }, []);
 
-  const fetchAdminComments = async () => {
+  const fetchAdminComments = useCallback(async () => {
     try {
       const res = await api.get('/posts/comments/admin/all');
       setAdminComments(res.data?.comments || []);
     } catch (e) {
       console.error('Failed to load admin comments:', e);
     }
-  };
+  }, []);
 
-  const fetchAdminStats = async () => {
+  const fetchAdminStats = useCallback(async () => {
     setLoadingAdminStats(true);
     try {
       const res = await api.get('/posts/analytics/admin-stats');
@@ -218,7 +218,7 @@ const Dashboard = () => {
     } finally {
       setLoadingAdminStats(false);
     }
-  };
+  }, []);
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
@@ -325,10 +325,15 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    document.title = 'Dashboard | AI BlogForge';
+    if (activeTab !== 'create-blog') {
+      setAutosaveStatus('');
+    }
+
     if (activeTab === 'overview' || activeTab === 'my-blogs' || activeTab === 'drafts') {
       fetchUserPosts();
     }
-    if (activeTab === 'analytics') {
+    if (activeTab === 'overview' || activeTab === 'analytics') {
       fetchMyStats();
     }
     if (activeTab === 'bookmarks') {
@@ -340,7 +345,16 @@ const Dashboard = () => {
       fetchAdminComments();
       fetchAdminStats();
     }
-  }, [activeTab]);
+  }, [
+    activeTab, 
+    fetchUserPosts, 
+    fetchMyStats, 
+    fetchBookmarks, 
+    fetchAdminUsers, 
+    fetchAdminPosts, 
+    fetchAdminComments, 
+    fetchAdminStats
+  ]);
 
   const handleLogout = () => {
     logout();
@@ -648,10 +662,10 @@ const Dashboard = () => {
               {/* Stats Grid */}
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { title: 'Published Blogs', count: posts.filter(p => p.status === 'published').length.toString(), icon: FileText, color: 'text-violet-500' },
-                  { title: 'Draft Blogs', count: posts.filter(p => p.status === 'draft').length.toString(), icon: FileEdit, color: 'text-cyan-500' },
-                  { title: 'Total Post Views', count: (posts.length * 154 + 48).toString(), icon: Eye, trend: '+12.4%', color: 'text-emerald-500' },
-                  { title: 'AI Assistant Queries', count: '18', icon: Sparkles, color: 'text-amber-500' }
+                  { title: 'Published Blogs', count: myStats?.publishedCount?.toString() || '0', icon: FileText, color: 'text-violet-500' },
+                  { title: 'Draft Blogs', count: myStats?.draftCount?.toString() || '0', icon: FileEdit, color: 'text-cyan-500' },
+                  { title: 'Total Post Views', count: myStats?.totalViews?.toString() || '0', icon: Eye, color: 'text-emerald-500' },
+                  { title: 'Total Likes', count: myStats?.totalLikes?.toString() || '0', icon: ThumbsUp, color: 'text-amber-500' }
                 ].map((stat, i) => {
                   const StatIcon = stat.icon;
                   return (

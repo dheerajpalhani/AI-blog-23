@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useAuthStore from '../store/authStore';
@@ -42,7 +42,7 @@ const BlogDetails = () => {
     if (!sessionStorage.getItem(sessionKey)) {
       api.put(`/posts/${id}/view`)
         .then((res) => {
-          if (res.data?.views !== undefined && post) {
+          if (res.data?.views !== undefined) {
             setPost((prev) => prev ? { ...prev, views: res.data.views } : null);
           }
         })
@@ -51,16 +51,16 @@ const BlogDetails = () => {
     }
   }, [id]);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const response = await api.get(`/posts/${id}/comments`);
       setComments(response.data?.comments || []);
     } catch (e) {
       console.error('Failed to load comments:', e);
     }
-  };
+  }, [id]);
 
-  const fetchRelatedPosts = async (cat) => {
+  const fetchRelatedPosts = useCallback(async (cat) => {
     try {
       const response = await api.get('/posts', {
         params: { status: 'published', category: cat, limit: 4 }
@@ -70,15 +70,19 @@ const BlogDetails = () => {
     } catch (e) {
       console.error('Failed to load related posts:', e);
     }
-  };
+  }, [id]);
 
-  const fetchPostDetails = async () => {
+  const fetchPostDetails = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get(`/posts/${id}`);
       const data = response.data?.post;
       setPost(data);
       setLikesCount(data.likes?.length || 0);
+
+      if (data) {
+        document.title = `${data.title} | AI BlogForge`;
+      }
 
       if (user) {
         const uId = user._id || user.id;
@@ -95,11 +99,11 @@ const BlogDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, user, fetchComments, fetchRelatedPosts, navigate]);
 
   useEffect(() => {
     fetchPostDetails();
-  }, [id, user]);
+  }, [fetchPostDetails]);
 
   const handleLikeToggle = async () => {
     if (!user) {

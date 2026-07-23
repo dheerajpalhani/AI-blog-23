@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../services/api';
@@ -20,7 +20,7 @@ const Home = () => {
 
   const categories = ['All', 'Technology', 'Design', 'AI Integration', 'Development'];
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get('/posts', {
@@ -41,7 +41,7 @@ const Home = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [category, sortBy, page, search]);
 
   // Debounce search input to avoid hitting backend on every keystroke
   useEffect(() => {
@@ -55,7 +55,11 @@ const Home = () => {
 
   useEffect(() => {
     fetchPosts();
-  }, [category, sortBy, page, search]);
+  }, [fetchPosts]);
+
+  useEffect(() => {
+    document.title = 'Home | AI BlogForge';
+  }, []);
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
@@ -67,6 +71,7 @@ const Home = () => {
     <div className="main-content">
       <div className="home-container">
       <motion.section 
+        id="home-hero"
         className="home-hero"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}

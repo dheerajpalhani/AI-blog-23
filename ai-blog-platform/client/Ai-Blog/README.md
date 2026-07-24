@@ -1,20 +1,55 @@
-# React + Vite
-# Tailwind CSS
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# AI Blog Platform - Client
 
-I used Tailwind CSS for the styling and shadcn/ui for the components.
+This is the frontend for the AI Blog Platform, built with React and Vite. It provides a sleek, modern, and highly responsive user interface for reading, writing, and managing blog posts.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Rich Text Editor**: Integrated `react-quill` for comprehensive post formatting.
+- **AI Integration**: A dedicated side-panel in the Dashboard to generate summaries, titles, or entire content blocks using Google Gemini (via the backend API).
+- **Authentication**: JWT session handling, login/registration forms, and protected routing.
+- **Dynamic Dashboard**:
+  - **Overview**: View your drafts and published posts.
+  - **Analytics**: Beautiful charts to track views and likes on your content.
+  - **Admin Panel**: For users with the `admin` role, moderate platform users, posts, and comments globally.
+- **User Engagement**: Fully functioning comment sections, post liking, and bookmarking.
+- **Styling**: Uses Tailwind CSS with a custom Cyber Violet/Slate color theme, glassmorphism UI elements, and sleek skeleton loaders.
 
-## React Compiler , ...
+## Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build and performanceand etc. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js (v18+ recommended)
+- A running instance of the Server API (see `../server/README.md`)
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Navigate to the client directory:
+   ```bash
+   cd client/Ai-Blog
+   ```
 
-and this project will help the needed one in the group to get a job easily .
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure Environment Variables:
+   Ensure you have a `.env` file or rely on Vite's default environment variables pointing to your backend. By default, the app is configured (via `api.js`) to point to `http://localhost:5000/api`.
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Build for production:
+   ```bash
+   npm run build
+   ```
+
+## Tech Stack
+
+- **Framework**: React 18
+- **Bundler**: Vite
+- **Styling**: Tailwind CSS, Framer Motion
+- **State Management**: Zustand
+- **Routing**: React Router DOM
+- **Forms**: React Hook Form
+- **Network Requests**: Axios, React Hot Toast

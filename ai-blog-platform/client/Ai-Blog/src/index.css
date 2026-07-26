@@ -85,10 +85,10 @@ html.light, :root.light {
   animation: skeleton-shimmer 1.5s infinite linear;
 }
 
-* {
+/* Tailwind's preflight owns margin and padding resets. Keeping this selector
+   limited to sizing lets utility classes such as p-6, mb-8 and gap-6 work. */
+*, *::before, *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 body {

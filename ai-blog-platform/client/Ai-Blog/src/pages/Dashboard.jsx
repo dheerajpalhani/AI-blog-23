@@ -560,7 +560,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-73px)] bg-slate-950 text-slate-100 font-sans antialiased">
+    <div className="flex min-h-[calc(100vh-73px)] bg-slate-950 text-slate-100 font-sans antialiased overflow-x-hidden">
       {/* Mobile Sidebar Toggle */}
       <button 
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -630,11 +630,11 @@ const Dashboard = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 overflow-y-auto bg-slate-950 p-6 lg:p-12 lg:pt-14">
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 mt-8 lg:mt-0">
+      <main className="flex-1 min-w-0 overflow-y-auto bg-slate-950 p-5 sm:p-6 xl:p-10 xl:pt-12">
+        <div className="w-full max-w-[1440px] mx-auto mt-8 xl:mt-0">
           
           {/* Header Row */}
-          <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center mb-8 pb-6 border-b border-slate-800/80">
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-8 pb-6 border-b border-slate-800/80">
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight text-white capitalize">
                 {activeTab.replace('-', ' ')}
@@ -646,7 +646,7 @@ const Dashboard = () => {
             {activeTab !== 'create-blog' && (
               <button 
                 onClick={() => setActiveTab('create-blog')}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-500 shadow-md hover:shadow-violet-600/10 transition"
+                className="inline-flex shrink-0 items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-500 shadow-md hover:shadow-violet-600/10 transition"
               >
                 <PlusSquare size={16} />
                 Create New Post
@@ -660,7 +660,7 @@ const Dashboard = () => {
           {activeTab === 'overview' && (
             <div className="space-y-8">
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4 xl:gap-6">
                 {[
                   { title: 'Published Blogs', count: myStats?.publishedCount?.toString() || '0', icon: FileText, color: 'text-violet-500' },
                   { title: 'Draft Blogs', count: myStats?.draftCount?.toString() || '0', icon: FileEdit, color: 'text-cyan-500' },
@@ -671,10 +671,10 @@ const Dashboard = () => {
                   return (
                     <div 
                       key={i} 
-                      className="p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-950/15 transition-all duration-300 rounded-2xl"
+                      className="min-w-0 p-5 xl:p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-950/15 transition-all duration-300 rounded-2xl"
                     >
                       <div className="flex justify-between items-start mb-4">
-                        <span className="text-sm font-semibold text-slate-400">{stat.title}</span>
+                        <span className="min-w-0 text-sm font-semibold text-slate-400">{stat.title}</span>
                         <div className="p-2 rounded-lg bg-slate-900/60">
                           <StatIcon className={stat.color} size={20} />
                         </div>
@@ -694,7 +694,7 @@ const Dashboard = () => {
               </div>
 
               {/* Grid sections for activities & tags */}
-              <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 2xl:grid-cols-3 xl:gap-8">
                 {/* Recent Activities */}
                 <div className="lg:col-span-2 p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 rounded-2xl">
                   <h3 className="text-lg font-bold mb-4 text-white">Recent Activities</h3>

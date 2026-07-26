@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -124,10 +122,12 @@ const CreatePost = () => {
         <div className="form-group">
           <label className="form-label">Body Content</label>
           <div className="editor-wrapper">
-            <ReactQuill 
-              theme="snow" 
-              value={content} 
-              onChange={setContent} 
+            <textarea
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              rows={14}
+              placeholder="Write your article here..."
+              className="block w-full resize-y bg-transparent px-4 py-3 text-[15px] leading-7 text-slate-100 placeholder:text-slate-600 focus:outline-none"
             />
           </div>
         </div>

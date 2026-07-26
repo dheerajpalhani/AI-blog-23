@@ -22,8 +22,6 @@ import {
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 import AnalyticsChart from '../components/AnalyticsChart';
 
 const Dashboard = () => {
@@ -851,7 +849,13 @@ const Dashboard = () => {
                   <div>
                     <label className="block text-sm font-semibold mb-2 text-slate-350 text-left">Body Content</label>
                     <div className="bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
-                      <ReactQuill theme="snow" value={newContent} onChange={setNewContent} />
+                      <textarea
+                        value={newContent}
+                        onChange={(event) => setNewContent(event.target.value)}
+                        rows={14}
+                        placeholder="Write your article here..."
+                        className="block w-full resize-y bg-slate-950 px-4 py-3 text-sm leading-7 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                      />
                     </div>
                     <div className="flex justify-between items-center text-xs text-slate-400 mt-2 px-1">
                       <div className="flex gap-4">

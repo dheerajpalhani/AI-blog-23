@@ -6,7 +6,7 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 
 const Login = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm();
   const { login, loading, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
@@ -112,19 +112,41 @@ const Login = () => {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
             
-            <button 
-              type="button" 
-              onClick={handleDemoLogin}
-              className="btn btn-secondary" 
-              style={{ 
-                width: '100%', 
-                marginTop: '12px', 
-                background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.1))', 
-                borderColor: 'var(--primary)' 
-              }}
-            >
-              ✨ Quick Demo Access
-            </button>
+            <div style={{ marginTop: '15px', textAlign: 'center', fontSize: '14px', color: 'var(--text-secondary)' }}>
+              <p style={{ marginBottom: '10px' }}>Want to look around? Use the demo account:</p>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  type="button" 
+                  onClick={handleDemoLogin}
+                  className="btn btn-secondary" 
+                  style={{ 
+                    flex: 1,
+                    background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.1))', 
+                    borderColor: 'var(--primary)',
+                    padding: '8px 12px',
+                    fontSize: '13px'
+                  }}
+                >
+                  ✨ One-Click Demo
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setValue('email', 'demo@blogforge.com');
+                    setValue('password', 'password123');
+                    toast.success('Demo credentials filled!');
+                  }}
+                  className="btn btn-secondary" 
+                  style={{ 
+                    flex: 1,
+                    padding: '8px 12px',
+                    fontSize: '13px'
+                  }}
+                >
+                  Fill Credentials
+                </button>
+              </div>
+            </div>
           </form>
 
           <p className="auth-footer">

@@ -17,7 +17,7 @@ const {
   getAdminStats,
   getAllComments,
 } = require('../controllers/postController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, optionalProtect, admin } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
@@ -28,8 +28,8 @@ router.get('/analytics/admin-stats', protect, admin, getAdminStats);
 router.get('/comments/admin/all', protect, admin, getAllComments);
 
 // Public / Private listings and detail retrieval
-router.get('/', getPosts);
-router.get('/:id', getPostById);
+router.get('/', optionalProtect, getPosts);
+router.get('/:id', optionalProtect, getPostById);
 
 // Authentication protected CRUD routes
 router.post('/', protect, createPost);

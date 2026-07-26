@@ -79,13 +79,15 @@ const getPosts = async (req, res, next) => {
       }
     }
 
-    // Filter by publication status
-    if (status) {
+    // Drafts are private. A draft filter is valid only for the authenticated
+    // author's own feed; all other requests are restricted to published posts.
+    const isOwnFeed = author === 'me' && Boolean(req.user);
+    if (status === 'draft' && !isOwnFeed) {
+      filter.status = 'published';
+    } else if (status) {
       filter.status = status;
-    } else {
-      if (!author || author !== 'me') {
-        filter.status = 'published';
-      }
+    } else if (!isOwnFeed) {
+      filter.status = 'published';
     }
 
     // Search query matches title, description, content, category, tags, or author name

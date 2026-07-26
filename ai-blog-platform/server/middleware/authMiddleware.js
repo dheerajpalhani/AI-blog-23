@@ -72,4 +72,30 @@ const admin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, admin };
+
+/**
+ * Attaches the authenticated user when a valid token is supplied, but keeps
+ * public routes accessible when no token is present.
+ */
+const optionalProtect = async (req, res, next) => {
+  let token;
+
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select('-password');
+    if (user) req.user = user;
+  } catch (error) {
+    // Public endpoints remain public; protected endpoints use `protect`.
+  }
+
+  next();
+};
+module.exports = { protect, optionalProtect, admin };

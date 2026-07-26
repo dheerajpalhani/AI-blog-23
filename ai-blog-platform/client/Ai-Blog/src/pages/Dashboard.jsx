@@ -634,9 +634,9 @@ const Dashboard = () => {
         <div className="w-full max-w-[1440px] mx-auto mt-8 xl:mt-0">
           
           {/* Header Row */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-8 pb-6 border-b border-slate-800/80">
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6 pb-6 border-b border-slate-800/80">
             <div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-white capitalize">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white capitalize">
                 {activeTab.replace('-', ' ')}
               </h1>
               <p className="text-sm text-slate-400">
@@ -658,9 +658,9 @@ const Dashboard = () => {
           
           {/* 1. Overview Tab */}
           {activeTab === 'overview' && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4 xl:gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
                 {[
                   { title: 'Published Blogs', count: myStats?.publishedCount?.toString() || '0', icon: FileText, color: 'text-violet-500' },
                   { title: 'Draft Blogs', count: myStats?.draftCount?.toString() || '0', icon: FileEdit, color: 'text-cyan-500' },
@@ -694,9 +694,9 @@ const Dashboard = () => {
               </div>
 
               {/* Grid sections for activities & tags */}
-              <div className="grid grid-cols-1 gap-6 2xl:grid-cols-3 xl:gap-8">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-3 xl:gap-6">
                 {/* Recent Activities */}
-                <div className="lg:col-span-2 p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 rounded-2xl">
+                <div className="xl:col-span-2 p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 rounded-2xl">
                   <h3 className="text-lg font-bold mb-4 text-white">Recent Activities</h3>
                   <div className="space-y-4">
                     {posts.slice(0, 3).map((blog, i) => (
@@ -1057,7 +1057,7 @@ const Dashboard = () => {
 
           {/* 5. Analytics Tab */}
           {activeTab === 'analytics' && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {loadingStats ? (
                 <div className="text-center py-10 text-slate-400">Compiling analytics reports...</div>
               ) : !myStats ? (

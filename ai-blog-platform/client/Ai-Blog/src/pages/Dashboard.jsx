@@ -25,7 +25,7 @@ import toast from 'react-hot-toast';
 import AnalyticsChart from '../components/AnalyticsChart';
 
 const Dashboard = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -244,7 +244,7 @@ const Dashboard = () => {
     try {
       const res = await api.put('/auth/profile', payload);
       if (res.data?.success) {
-        useAuthStore.setState({ user: res.data.user });
+        updateUser(res.data.user);
         toast.success('Profile updated successfully!', { id: toastId });
         setOldPassword('');
         setNewPassword('');

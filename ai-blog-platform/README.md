@@ -18,6 +18,15 @@ This repository is organized as a monorepo containing:
 - `/client/Ai-Blog` - The frontend React application built with Vite and Tailwind CSS.
 - `/server` - The backend API built with Express, MongoDB, and Mongoose.
 
+## Demo
+
+Experience the platform with a polished, modern blogging workflow:
+
+- Create an account or log in to access your personalized dashboard.
+- Write and publish posts with AI-assisted generation and rich editing tools.
+- Explore analytics, bookmarks, and profile management from one interface.
+- Admin users can manage content and review platform activity from the dashboard.
+
 ## Getting Started
 
 To run this project locally, you will need to start both the client and the server. Please refer to their respective README files for setup and execution instructions.

@@ -569,19 +569,27 @@ const Dashboard = () => {
 
       {/* Sidebar Navigation */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-slate-900/90 border-r border-slate-800 backdrop-blur-md transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-[73px] lg:bottom-auto lg:left-auto lg:h-[calc(100vh-73px)] lg:block
+        fixed inset-y-0 left-0 z-40 w-64 bg-slate-900/90 border-r border-slate-800/80 backdrop-blur-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-[73px] lg:bottom-auto lg:left-auto lg:h-[calc(100vh-73px)] lg:block
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full">
           {/* Logo Area */}
-          <div className="p-6 border-b border-slate-800 lg:hidden">
-            <span className="text-2xl font-extrabold bg-gradient-to-r from-violet-500 to-cyan-400 bg-clip-text text-transparent tracking-tight">
-              AI BlogForge
-            </span>
+          <div className="p-5 border-b border-slate-800/80 bg-gradient-to-br from-violet-600/10 via-slate-900 to-cyan-600/10 lg:hidden">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-500 to-cyan-500 text-sm font-bold text-white shadow-lg shadow-violet-500/20">
+                AB
+              </div>
+              <div>
+                <p className="text-lg font-extrabold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
+                  AI BlogForge
+                </p>
+                <p className="text-[11px] text-slate-500">Creator workspace</p>
+              </div>
+            </div>
           </div>
 
           {/* Menu Items */}
-          <nav className="flex-1 px-4 py-8 space-y-1.5 overflow-y-auto">
+          <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -592,10 +600,10 @@ const Dashboard = () => {
                     setSidebarOpen(false);
                   }}
                   className={`
-                    flex items-center w-full gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200
+                    flex items-center w-full gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border
                     ${activeTab === item.id 
-                      ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' 
-                      : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'}
+                      ? 'bg-violet-600/90 text-white shadow-lg shadow-violet-500/20 border-violet-500/40' 
+                      : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-200 border-transparent hover:border-slate-700'}
                   `}
                 >
                   <Icon size={18} />
@@ -632,24 +640,30 @@ const Dashboard = () => {
         <div className="w-full max-w-[1440px] mx-auto mt-8 xl:mt-0">
           
           {/* Header Row */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6 pb-6 border-b border-slate-800/80">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white capitalize">
-                {activeTab.replace('-', ' ')}
-              </h1>
-              <p className="text-sm text-slate-400">
-                Welcome back to your workspace, {user?.name || 'Author'}.
-              </p>
+          <div className="mb-6 rounded-2xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-900 to-violet-950/40 p-5 shadow-lg shadow-black/20">
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+              <div>
+                <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-violet-300">
+                  <Sparkles size={12} />
+                  Creative workspace
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white capitalize">
+                  {activeTab.replace('-', ' ')}
+                </h1>
+                <p className="mt-1 text-sm text-slate-400">
+                  Welcome back to your workspace, {user?.name || 'Author'}.
+                </p>
+              </div>
+              {activeTab !== 'create-blog' && (
+                <button 
+                  onClick={() => setActiveTab('create-blog')}
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:bg-violet-500"
+                >
+                  <PlusSquare size={16} />
+                  Create New Post
+                </button>
+              )}
             </div>
-            {activeTab !== 'create-blog' && (
-              <button 
-                onClick={() => setActiveTab('create-blog')}
-                className="inline-flex shrink-0 items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-500 shadow-md hover:shadow-violet-600/10 transition"
-              >
-                <PlusSquare size={16} />
-                Create New Post
-              </button>
-            )}
           </div>
 
           {/* Dynamically Rendered Tab Views */}
@@ -669,22 +683,25 @@ const Dashboard = () => {
                   return (
                     <div 
                       key={i} 
-                      className="min-w-0 p-5 xl:p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-950/15 transition-all duration-300 rounded-2xl"
+                      className="min-w-0 rounded-2xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950/80 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-950/15 xl:p-6"
                     >
-                      <div className="flex justify-between items-start mb-4">
+                      <div className="mb-4 flex items-start justify-between">
                         <span className="min-w-0 text-sm font-semibold text-slate-400">{stat.title}</span>
-                        <div className="p-2 rounded-lg bg-slate-900/60">
+                        <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-2">
                           <StatIcon className={stat.color} size={20} />
                         </div>
                       </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-extrabold tracking-tight text-white">{stat.count}</span>
                         {stat.trend && (
-                          <span className="text-xs font-semibold text-emerald-400 flex items-center gap-0.5">
+                          <span className="flex items-center gap-0.5 text-xs font-semibold text-emerald-400">
                             <TrendingUp size={12} />
                             {stat.trend}
                           </span>
                         )}
+                      </div>
+                      <div className="mt-4 h-1.5 rounded-full bg-slate-950">
+                        <div className={`h-full rounded-full ${i % 2 === 0 ? 'bg-violet-500' : 'bg-cyan-500'}`} style={{ width: `${Math.min(100, 40 + i * 15)}%` }}></div>
                       </div>
                     </div>
                   );
@@ -694,8 +711,13 @@ const Dashboard = () => {
               {/* Grid sections for activities & tags */}
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-3 xl:gap-6">
                 {/* Recent Activities */}
-                <div className="xl:col-span-2 p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 rounded-2xl">
-                  <h3 className="text-lg font-bold mb-4 text-white">Recent Activities</h3>
+                <div className="xl:col-span-2 rounded-2xl border border-slate-800/80 bg-gradient-to-b from-slate-900 to-slate-950/80 p-6">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-white">Recent Activities</h3>
+                    <span className="rounded-full border border-slate-700 bg-slate-950/70 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                      Live feed
+                    </span>
+                  </div>
                   <div className="space-y-4">
                     {posts.slice(0, 3).map((blog, i) => (
                       <div key={blog._id} className="flex justify-between items-center p-4 rounded-xl bg-slate-950/60 border border-slate-850/80 hover:border-slate-800 transition-all duration-200">
@@ -720,8 +742,13 @@ const Dashboard = () => {
                 </div>
 
                 {/* Popular Tags */}
-                <div className="p-6 bg-gradient-to-b from-slate-900 to-slate-950/80 border border-slate-800/80 rounded-2xl">
-                  <h3 className="text-lg font-bold mb-4 text-white">Tag Performance</h3>
+                <div className="rounded-2xl border border-slate-800/80 bg-gradient-to-b from-slate-900 to-slate-950/80 p-6">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-white">Tag Performance</h3>
+                    <span className="rounded-full border border-slate-700 bg-slate-950/70 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                      Insights
+                    </span>
+                  </div>
                   <div className="space-y-4">
                     {[
                       { name: 'Technology', percentage: posts.filter(p => p.category === 'Technology').length > 0 ? '80%' : '0%', color: 'bg-violet-600' },

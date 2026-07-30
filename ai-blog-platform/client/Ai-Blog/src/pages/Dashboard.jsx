@@ -1198,123 +1198,185 @@ const Dashboard = () => {
 
           {/* 7. Profile Tab */}
           {activeTab === 'profile' && (
-            <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl max-w-2xl mx-auto text-left">
-              <div className="flex flex-col sm:flex-row items-center gap-6 mb-8 pb-6 border-b border-slate-800">
-                <div className="relative group shrink-0">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-violet-500 to-cyan-500 flex items-center justify-center text-2xl font-bold text-white shadow-xl overflow-hidden">
-                    {profileAvatar ? (
-                      <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
-                    ) : (
-                      profileName?.[0]?.toUpperCase() || 'U'
-                    )}
+            <div className="max-w-4xl mx-auto text-left space-y-6">
+              
+              {/* Profile Header Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-900/50 backdrop-blur-xl shadow-2xl">
+                {/* Decorative Background */}
+                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-cyan-600/40 opacity-50 blur-2xl"></div>
+                
+                <div className="relative p-6 sm:p-10">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6">
+                    <div className="relative group shrink-0">
+                      <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-violet-500 to-cyan-500 p-1 shadow-2xl shadow-violet-500/20 transition-transform duration-300 group-hover:scale-105">
+                        <div className="w-full h-full rounded-full overflow-hidden bg-slate-950 flex items-center justify-center text-4xl font-extrabold text-white">
+                          {profileAvatar ? (
+                            <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
+                          ) : (
+                            profileName?.[0]?.toUpperCase() || 'U'
+                          )}
+                        </div>
+                      </div>
+                      <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-[10px] text-white font-semibold rounded-full cursor-pointer transition-all duration-300 backdrop-blur-sm m-1">
+                        <UserCircle size={24} className="mb-1 text-violet-300" />
+                        <span>Change Photo</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={handleProfileAvatarUpload} />
+                      </label>
+                    </div>
+                    
+                    <div className="text-center sm:text-left flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+                        <h3 className="text-3xl font-black text-white tracking-tight">
+                          {profileName || 'Author'}
+                        </h3>
+                        {user?.role === 'admin' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-500/10 text-violet-400 text-[10px] font-extrabold uppercase tracking-widest rounded-full border border-violet-500/20 shadow-[0_0_15px_rgba(139,92,246,0.15)]">
+                            <Shield size={10} /> Admin
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium text-slate-400 flex items-center justify-center sm:justify-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        {profileEmail}
+                      </p>
+                    </div>
                   </div>
-                  <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white font-semibold rounded-full cursor-pointer transition">
-                    Upload
-                    <input type="file" accept="image/*" className="hidden" onChange={handleProfileAvatarUpload} />
-                  </label>
-                </div>
-                <div className="text-center sm:text-left">
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    {profileName || 'Author'}
-                    {user?.role === 'admin' && (
-                      <span className="px-2 py-0.5 bg-violet-950 text-violet-400 text-[10px] font-bold uppercase rounded border border-violet-900">
-                        Admin
-                      </span>
-                    )}
-                  </h3>
-                  <p className="text-sm text-slate-400">{profileEmail}</p>
-                  <p className="text-xs text-slate-500 mt-1">Profile Avatar & BIO can be loaded into public article author cards.</p>
                 </div>
               </div>
 
-              <form className="space-y-6" onSubmit={handleProfileUpdate}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold mb-2 text-slate-400">Full Name</label>
-                    <input 
-                      type="text" 
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-violet-600 transition" 
-                      value={profileName} 
-                      onChange={(e) => setProfileName(e.target.value)}
-                      required
+              <form onSubmit={handleProfileUpdate} className="space-y-6">
+                
+                {/* General Info Card */}
+                <div className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-6 sm:p-8 shadow-xl backdrop-blur-md transition-all hover:border-slate-700/80 hover:bg-slate-900/60">
+                  <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-800/50">
+                    <div className="p-2 rounded-lg bg-violet-500/10 text-violet-400">
+                      <UserCircle size={20} />
+                    </div>
+                    <h4 className="text-lg font-bold text-white">Personal Information</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+                      <input 
+                        type="text" 
+                        className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 hover:border-slate-700" 
+                        placeholder="Your full name"
+                        value={profileName} 
+                        onChange={(e) => setProfileName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+                      <input 
+                        type="email" 
+                        className="w-full bg-slate-950/30 border border-slate-800/50 rounded-xl px-4 py-3 text-sm text-slate-500 cursor-not-allowed" 
+                        value={profileEmail} 
+                        disabled 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Author Bio</label>
+                    <textarea 
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-300 hover:border-slate-700 resize-none min-h-[100px]"
+                      placeholder="Tell readers about yourself, your expertise, and what you write about..."
+                      value={profileBio}
+                      onChange={(e) => setProfileBio(e.target.value)}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold mb-2 text-slate-400">Email Address</label>
-                    <input 
-                      type="email" 
-                      className="w-full bg-slate-950 border border-slate-850 rounded-lg px-4 py-2.5 text-sm text-slate-500" 
-                      value={profileEmail} 
-                      disabled 
-                    />
+                    <p className="text-[10px] text-slate-500 text-right mt-1">This will be displayed on your public author profile.</p>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold mb-2 text-slate-400">BIO</label>
-                  <textarea 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white h-20 focus:outline-none focus:border-violet-600 transition"
-                    placeholder="Tell readers about yourself..."
-                    value={profileBio}
-                    onChange={(e) => setProfileBio(e.target.value)}
-                  />
-                </div>
-
-                {/* Social Links Row */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold text-slate-350 uppercase tracking-wider">Social Links</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-semibold mb-1 text-slate-500">Twitter URL</label>
-                      <input 
-                        type="text" 
-                        placeholder="https://twitter.com/username"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-600 transition"
-                        value={profileTwitter}
-                        onChange={(e) => setProfileTwitter(e.target.value)}
-                      />
+                {/* Social Links Card */}
+                <div className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-6 sm:p-8 shadow-xl backdrop-blur-md transition-all hover:border-slate-700/80 hover:bg-slate-900/60">
+                  <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-800/50">
+                    <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-semibold mb-1 text-slate-500">LinkedIn URL</label>
-                      <input 
-                        type="text" 
-                        placeholder="https://linkedin.com/in/username"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-600 transition"
-                        value={profileLinkedin}
-                        onChange={(e) => setProfileLinkedin(e.target.value)}
-                      />
+                    <h4 className="text-lg font-bold text-white">Social Connections</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Twitter</label>
+                      <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-violet-400 transition-colors">
+                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg>
+                        </div>
+                        <input 
+                          type="text" 
+                          placeholder="username"
+                          className="w-full bg-slate-950/50 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all hover:border-slate-700"
+                          value={profileTwitter}
+                          onChange={(e) => setProfileTwitter(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-semibold mb-1 text-slate-500">GitHub URL</label>
-                      <input 
-                        type="text" 
-                        placeholder="https://github.com/username"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-600 transition"
-                        value={profileGithub}
-                        onChange={(e) => setProfileGithub(e.target.value)}
-                      />
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">LinkedIn</label>
+                      <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-violet-400 transition-colors">
+                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                        </div>
+                        <input 
+                          type="text" 
+                          placeholder="username"
+                          className="w-full bg-slate-950/50 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all hover:border-slate-700"
+                          value={profileLinkedin}
+                          onChange={(e) => setProfileLinkedin(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">GitHub</label>
+                      <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-violet-400 transition-colors">
+                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                        </div>
+                        <input 
+                          type="text" 
+                          placeholder="username"
+                          className="w-full bg-slate-950/50 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all hover:border-slate-700"
+                          value={profileGithub}
+                          onChange={(e) => setProfileGithub(e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Password editing */}
-                <div className="space-y-4 pt-4 border-t border-slate-800">
-                  <h4 className="text-xs font-bold text-slate-350 uppercase tracking-wider">Update Password (Optional)</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-semibold mb-1 text-slate-500">New Password</label>
+                {/* Security Card */}
+                <div className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-6 sm:p-8 shadow-xl backdrop-blur-md transition-all hover:border-slate-700/80 hover:bg-slate-900/60">
+                  <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-800/50">
+                    <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-white">Security Settings</h4>
+                      <p className="text-[11px] text-slate-500">Leave blank if you don't want to change your password</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">New Password</label>
                       <input 
                         type="password" 
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:outline-none focus:border-violet-600 transition"
+                        placeholder="••••••••"
+                        className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-all hover:border-slate-700"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                       />
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-semibold mb-1 text-slate-500">Confirm New Password</label>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Confirm New Password</label>
                       <input 
                         type="password" 
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-white focus:outline-none focus:border-violet-600 transition"
+                        placeholder="••••••••"
+                        className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-all hover:border-slate-700"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                       />
@@ -1322,9 +1384,17 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <button type="submit" className="px-6 py-2.5 bg-violet-600 hover:bg-violet-500 text-sm font-semibold rounded-lg text-white transition cursor-pointer">
-                  Save Changes
-                </button>
+                {/* Actions */}
+                <div className="flex justify-end pt-2">
+                  <button 
+                    type="submit" 
+                    className="group relative inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-violet-500/25 transition-all duration-300 hover:scale-[1.02] hover:shadow-violet-500/40 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900 cursor-pointer"
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 transition-opacity group-hover:opacity-100"></div>
+                    <Sparkles size={16} className="text-violet-200" />
+                    Save All Changes
+                  </button>
+                </div>
               </form>
             </div>
           )}

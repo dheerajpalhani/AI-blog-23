@@ -9,6 +9,7 @@ A full-stack, AI-powered blogging platform where writers can create, manage, and
 | Feature | Details |
 |---|---|
 | **AI Content Generation** | Generate blog titles, ideas, and full article drafts via Google Gemini |
+| **Premium Modern UI** | Beautiful glassmorphic design, ambient gradients, floating cards, and micro-animations |
 | **Rich Text Editor** | Format posts with ReactQuill (bold, headings, lists, links, and more) |
 | **JWT Authentication** | Secure, cookie-based auth with register, login, and logout flows |
 | **Role-based Access** | Standard users and Admin users with separate permissions |

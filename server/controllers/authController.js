@@ -1,6 +1,23 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 
+const sendAuthenticatedUser = (res, user, statusCode = 200) => {
+  const token = generateToken(res, user._id);
+
+  res.status(statusCode).json({
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      bio: user.bio,
+      socialLinks: user.socialLinks,
+      role: user.role,
+    },
+    token,
+  });
+};
+
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -28,21 +45,7 @@ const registerUser = async (req, res, next) => {
     });
 
     if (user) {
-      // Generate token and set cookie
-      const token = generateToken(res, user._id);
-
-      res.status(201).json({
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          avatar: user.avatar,
-          bio: user.bio,
-          socialLinks: user.socialLinks,
-          role: user.role,
-        },
-        token,
-      });
+      sendAuthenticatedUser(res, user, 201);
     } else {
       res.status(400);
       throw new Error('Invalid user data');
@@ -69,21 +72,7 @@ const loginUser = async (req, res, next) => {
 
     // Validate credentials
     if (user && (await user.comparePassword(password))) {
-      // Generate token and set cookie
-      const token = generateToken(res, user._id);
-
-      res.status(200).json({
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          avatar: user.avatar,
-          bio: user.bio,
-          socialLinks: user.socialLinks,
-          role: user.role,
-        },
-        token,
-      });
+      sendAuthenticatedUser(res, user);
     } else {
       res.status(401);
       throw new Error('Invalid email or password');
@@ -246,6 +235,15 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+const googleAuthCallback = async (req, res, next) => {
+  try {
+    generateToken(res, req.user._id);
+    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard`);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -255,4 +253,5 @@ module.exports = {
   getAllUsers,
   updateUserRole,
   deleteUser,
+  googleAuthCallback,
 };

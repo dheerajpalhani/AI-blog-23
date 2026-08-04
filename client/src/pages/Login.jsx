@@ -27,6 +27,10 @@ const Login = () => {
     }
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`;
+  };
+
   const handleDemoLogin = async () => {
     const demoEmail = 'demo@blogforge.com';
     const demoPassword = 'password123';
@@ -110,6 +114,15 @@ const Login = () => {
 
             <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="btn btn-secondary"
+              style={{ width: '100%', marginTop: '12px', background: 'white', color: '#111827', border: '1px solid #d1d5db' }}
+            >
+              Sign in with Google
             </button>
             
             <div style={{ marginTop: '15px', textAlign: 'center', fontSize: '14px', color: 'var(--text-secondary)' }}>

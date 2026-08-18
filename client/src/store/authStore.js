@@ -58,6 +58,14 @@ const useAuthStore = create((set) => ({
   },
 
   checkAuth: async () => {
+    const currentToken = localStorage.getItem('token');
+    
+    // Do not attempt to check auth if there's no token, prevents unnecessary network errors
+    if (!currentToken) {
+      set({ user: null, token: null, isAuthenticated: false, isInitializing: false });
+      return;
+    }
+
     set({ isInitializing: true });
     try {
       const response = await api.get('/auth/me');

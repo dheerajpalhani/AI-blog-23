@@ -18,12 +18,22 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/logout', logoutUser);
+const googleAuthMiddleware = (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    return res.redirect(`${clientUrl}/login?error=google_auth_not_configured`);
+  }
+  next();
+};
+
 router.get(
   '/google',
+  googleAuthMiddleware,
   passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 router.get(
   '/google/callback',
+  googleAuthMiddleware,
   passport.authenticate('google', { session: false, failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:5173'}/login` }),
   googleAuthCallback
 );

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
@@ -11,13 +11,21 @@ const Login = () => {
   const { register, handleSubmit, setValue, formState: { errors } } = useForm();
   const { login, loading, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     document.title = 'Login | AI BlogForge';
     if (isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+    
+    // Check for errors from backend redirect (like missing Google OAuth credentials)
+    const params = new URLSearchParams(location.search);
+    if (params.get('error') === 'google_auth_not_configured') {
+      toast.error('Google Login is currently unavailable (OAuth credentials missing in server config).');
+      window.history.replaceState({}, '', '/login'); // clean up URL
+    }
+  }, [isAuthenticated, navigate, location]);
 
   const onSubmit = async (data) => {
     const result = await login(data.email, data.password);

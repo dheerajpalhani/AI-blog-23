@@ -20,8 +20,8 @@ app.use(
   cors({
     origin: function (origin, callback) {
       const allowedOrigins = [
-        process.env.CLIENT_URL, 
-        'http://localhost:5173', 
+        process.env.CLIENT_URL,
+        'https://ai-blog-23-eta.vercel.app',
         'http://localhost:5003'
       ];
       if (!origin || allowedOrigins.includes(origin)) {

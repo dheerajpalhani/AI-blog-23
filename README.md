@@ -1,7 +1,7 @@
 # 🤖 AI BlogForge
 
 A full-stack, AI-powered blogging platform where writers can create, manage, and publish articles with the help of Google Gemini. Built with a React (Vite) frontend and an Express + MongoDB backend.
-
+ and 
 ---
 
 ## ✨ Features

@@ -111,10 +111,6 @@ ai-blog-platform/
 
 ---
 
-## 🚀 Getting Started
-
-You need to run **both** the client and server concurrently in separate terminals.
-
 ### Prerequisites
 
 - Node.js v18+

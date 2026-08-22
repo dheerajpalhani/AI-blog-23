@@ -104,7 +104,7 @@ ai-blog-platform/
 | bcryptjs | Password hashing |
 | Multer | Multipart file upload handling |
 | Cloudinary | Cloud image storage |
-| Google Gemini (`@google/genai`) | AI content generation |
+| Google Gemini (`@google`) | AI content generation |
 | cookie-parser | HttpOnly cookie management |
 | dotenv | Environment variable loading |
 | nodemon | Dev server auto-restart |
@@ -122,8 +122,8 @@ ai-blog-platform/
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
-cd ai-blog-platform
+git clone https://github.com/dheerajpalhani/AI-blog-23
+cd ai-blog-23
 ```
 
 ### 2. Set up the Server

@@ -143,7 +143,7 @@ cp .env.example .env
 PORT=5000
 MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/ai-blogforge
 JWT_SECRET=your_super_secret_jwt_key
-CLIENT_URL=http://localhost:5173
+CLIENT_URL=http://localhost:5003
 
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
@@ -236,7 +236,7 @@ GET /api/health
 
 Each sub-project has its own dedicated README with additional setup details:
 
-- [📘 Client Documentation](./client/Ai-Blog/README.md)
+- [📘 Client Documentation](./client/README.md)
 - [📗 Server Documentation](./server/README.md)
 
 ---

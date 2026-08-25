@@ -10,12 +10,6 @@ This is the Express backend for the AI Blog Platform. It provides a robust REST 
 - **File Uploads**: Image handling using Multer (memory storage) and Cloudinary for blog post covers and user avatars.
 - **Global Error Handling**: Comprehensive catching of asynchronous errors, Mongoose validations, and JWT token expirations.
 
-## Prerequisites
-
-- Node.js (v18+ recommended)
-- MongoDB Connection String
-- Google Gemini API Key
-- Cloudinary Account details
 
 ## Environment Setup
 

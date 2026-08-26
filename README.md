@@ -232,17 +232,6 @@ GET /api/health
 
 ---
 
-## 📄 Sub-project Documentation
-
-Each sub-project has its own dedicated README with additional setup details:
-
-- [📘 Client Documentation](./client/README.md)
-- [📗 Server Documentation](./server/README.md)
-
----
-
 ## 📝 License
 
 This project is open-source and available under the [ISC License](./server/package.json).
-change in render 
-and deploy

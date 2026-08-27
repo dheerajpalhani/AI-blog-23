@@ -215,14 +215,6 @@ The frontend will be running at `http://localhost:5173`.
 |---|---|---|---|
 | `POST` | `/generate` | 🔒 User | Generate AI content (title, ideas, or full draft) using Gemini |
 
-### Health Check
-
-```
-GET /api/health
-```
-
----
-
 ## 🔐 Authentication Flow
 
 1. On login/register, the server creates a signed JWT and sets it as an **HttpOnly cookie**.

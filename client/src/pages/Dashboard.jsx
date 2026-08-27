@@ -792,6 +792,9 @@ const Dashboard = () => {
                     <div className="px-6 py-4 bg-slate-950 border-t border-slate-800/60 flex justify-between items-center text-xs text-slate-500">
                       <span>Published: {new Date(blog.createdAt).toLocaleDateString()}</span>
                       <div className="flex gap-4">
+                        <Link to={`/blog/${blog._id}`} className="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 cursor-pointer">
+                          <Eye size={12} /> View
+                        </Link>
                         <button onClick={() => handleEdit(blog)} className="text-violet-400 hover:text-violet-300 font-semibold cursor-pointer">Edit</button>
                         <button onClick={() => handleDelete(blog._id)} className="text-rose-400 hover:text-rose-350 font-semibold flex items-center gap-1 cursor-pointer">
                           <Trash2 size={12} /> Delete

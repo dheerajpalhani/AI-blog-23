@@ -221,9 +221,3 @@ The frontend will be running at `http://localhost:5173`.
 2. The client sends subsequent requests with `credentials: 'include'` (Axios `withCredentials: true`).
 3. The `protect` middleware reads the cookie, verifies the token, and attaches `req.user` to the request.
 4. The `admin` middleware additionally checks that `req.user.role === 'admin'`.
-
----
-
-## 📝 License
-
-This project is open-source and available under the [ISC License](./server/package.json).

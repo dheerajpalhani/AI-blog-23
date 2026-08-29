@@ -129,13 +129,6 @@ cd ai-blog-23
 ### 2. Set up the Server
 
 ```bash
-cd server
-npm install
-```
-
-Copy the example env file and fill in your values:
-
-```bash
 cp .env.example .env
 ```
 

@@ -208,9 +208,3 @@ The frontend will be running at `http://localhost:5173`.
 |---|---|---|---|
 | `POST` | `/generate` | 🔒 User | Generate AI content (title, ideas, or full draft) using Gemini |
 
-## 🔐 Authentication Flow
-
-1. On login/register, the server creates a signed JWT and sets it as an **HttpOnly cookie**.
-2. The client sends subsequent requests with `credentials: 'include'` (Axios `withCredentials: true`).
-3. The `protect` middleware reads the cookie, verifies the token, and attaches `req.user` to the request.
-4. The `admin` middleware additionally checks that `req.user.role === 'admin'`.

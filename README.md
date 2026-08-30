@@ -201,10 +201,3 @@ The frontend will be running at `http://localhost:5173`.
 | `GET` | `/analytics/my-stats` | 🔒 User | Get author's personal analytics |
 | `GET` | `/analytics/admin-stats` | 🔒 Admin | Get platform-wide analytics |
 | `GET` | `/comments/admin/all` | 🔒 Admin | Get all comments across the platform |
-
-### AI — `/api/ai`
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `POST` | `/generate` | 🔒 User | Generate AI content (title, ideas, or full draft) using Gemini |
-

@@ -162,5 +162,3 @@ cd ../client/Ai-Blog
 npm install
 npm run dev
 ```
-
-The frontend will be running at `http://localhost:5173`.
